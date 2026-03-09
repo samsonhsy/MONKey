@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class Session(
-    @PrimaryKey val sessionID: Int,
+    @PrimaryKey @ColumnInfo(name = "session_id") val sessionID: Int,
     @ColumnInfo val sessionName: String,
     @ColumnInfo val startDateTime: String, // e.g. #FFFF00
     @ColumnInfo val packageNames: List<String>,
