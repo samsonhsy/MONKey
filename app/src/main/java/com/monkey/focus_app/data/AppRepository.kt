@@ -19,28 +19,28 @@ class AppRepository(
     private val userStatsDao: UserStatsDao,
     ) {
 /*--------------------------------------------------------------Focus Log------------------------------------------------------- */
-    fun getAllFocusLog() = focusLogDao.getAll()
+    suspend fun getAllFocusLog() = focusLogDao.getAll()
 
-    fun getAllFocusLogByIds(focusLogID: IntArray) = focusLogDao.loadAllByIds(focusLogID)
+    suspend fun getAllFocusLogByIds(focusLogID: IntArray) = focusLogDao.loadAllByIds(focusLogID)
 
-    fun getSessionByFocusIds(focusLogID: IntArray) = focusLogDao.findSessionByIds(focusLogID)
+    suspend fun getSessionByFocusIds(focusLogID: IntArray) = focusLogDao.findSessionByIds(focusLogID)
 
-    fun insertAllFocusLog(vararg focusLog: FocusLog) = focusLogDao.insertAll(*focusLog)
+    suspend fun insertAllFocusLog(vararg focusLog: FocusLog) = focusLogDao.insertAll(*focusLog)
 
-    fun deleteFocusLog(vararg focusLog: FocusLog) = focusLogDao.delete(*focusLog)
+    suspend fun deleteFocusLog(vararg focusLog: FocusLog) = focusLogDao.delete(*focusLog)
 
 /*--------------------------------------------------------------Reward--------------------------------------------------------- */
-    fun getAllReward() = rewardDao.getAll()
+suspend fun getAllReward() = rewardDao.getAll()
 
-    fun getAllRewardByIds(rewardItemID: IntArray) = rewardDao.loadAllByIds(rewardItemID)
+    suspend fun getAllRewardByIds(rewardItemID: IntArray) = rewardDao.loadAllByIds(rewardItemID)
 
-    fun getAllRewardByNames(rewardItemName: Array<String>) = rewardDao.loadAllByNames(rewardItemName)
+    suspend fun getAllRewardByNames(rewardItemName: Array<String>) = rewardDao.loadAllByNames(rewardItemName)
 
-    fun getAllRewardWithinCost(rewardItemCost: Int) = rewardDao.loadAllWithinCost(rewardItemCost)
+    suspend fun getAllRewardWithinCost(rewardItemCost: Int) = rewardDao.loadAllWithinCost(rewardItemCost)
 
-    fun insertAllReward(vararg rewardItem: RewardItem) = rewardDao.insertAll(*rewardItem)
+    suspend fun insertAllReward(vararg rewardItem: RewardItem) = rewardDao.insertAll(*rewardItem)
 
-    fun deleteReward(rewardItem: RewardItem) = rewardDao.delete(rewardItem)
+    suspend fun deleteReward(rewardItem: RewardItem) = rewardDao.delete(rewardItem)
 /*--------------------------------------------------------------Session------------------------------------------------------- */
 
     fun getAllSession() = sessionDao.getAll()
@@ -49,7 +49,7 @@ class AppRepository(
 
     fun getAllActiveSession() = sessionDao.getActiveSession()
 
-    fun insertAllSession(vararg session: Session) = sessionDao.insertAll(*session)
+    suspend fun insertAllSession(vararg session: Session) = sessionDao.insertAll(*session)
 
     suspend fun updateAllSession(vararg session: Session) = sessionDao.updateAll(*session)
 
@@ -59,7 +59,7 @@ class AppRepository(
 
     fun getAllTag() = tagDao.getAll()
 
-    fun getTagsById(id: Int) = tagDao.getTagsById(id)
+    suspend fun getTagsById(id: Int) = tagDao.getTagsById(id)
 
     suspend fun insertAllTag(vararg tag: Tag) = tagDao.insertAll(*tag)
 
@@ -71,6 +71,9 @@ class AppRepository(
 
     fun getAllUserStats() = userStatsDao.getAll()
 
+    suspend fun insertAllUserStats(userStats: UserStats) = userStatsDao.insert(userStats)
+
     suspend fun updateAllUserStats(userStats: UserStats) = userStatsDao.update(userStats)
+
 
 }

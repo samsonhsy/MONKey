@@ -9,20 +9,20 @@ import com.monkey.focus_app.data.db.entity.RewardItem
 @Dao
 interface RewardItemDao {
     @Query("SELECT * FROM reward_item")
-    fun getAll(): List<RewardItem>
+    suspend fun getAll(): List<RewardItem>
 
     @Query("SELECT * FROM reward_item WHERE reward_item_id IN (:rewardItemID)")
-    fun loadAllByIds(rewardItemID: IntArray): List<RewardItem>
+    suspend fun loadAllByIds(rewardItemID: IntArray): List<RewardItem>
 
     @Query("SELECT * FROM reward_item WHERE reward_item_name IN (:rewardItemName)")
-    fun loadAllByNames(rewardItemName: Array<String>): List<RewardItem>
+    suspend fun loadAllByNames(rewardItemName: Array<String>): List<RewardItem>
 
     @Query(value = "SELECT * FROM reward_item WHERE cost <= (:rewardItemCost)")
-    fun loadAllWithinCost(rewardItemCost: Int): RewardItem
+    suspend fun loadAllWithinCost(rewardItemCost: Int): RewardItem
 
     @Insert
-    fun insertAll(vararg rewardItem: RewardItem)
+    suspend fun insertAll(vararg rewardItem: RewardItem)
 
     @Delete
-    fun delete(rewardItem: RewardItem)
+    suspend fun delete(rewardItem: RewardItem)
 }
