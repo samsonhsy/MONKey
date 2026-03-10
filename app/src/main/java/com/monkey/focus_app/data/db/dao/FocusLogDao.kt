@@ -16,8 +16,8 @@ interface FocusLogDao {
     fun loadAllByIds(focusLogID: IntArray): List<FocusLog>
 
     @Query(
-        "SELECT * FROM session " +
-                "JOIN focus_log ON focus_log.session_id = session.session_id " +
+        "SELECT * FROM session_table " +
+                "JOIN focus_log ON focus_log.session_id = session_table.session_id " +
                 "WHERE focus_log_id IN (:focusLogID)"
     )
     fun findSessionByIds(focusLogID: IntArray): List<Session>
