@@ -26,5 +26,5 @@ interface FocusLogDao {
     fun insertAll(vararg focusLog: FocusLog)
 
     @Delete
-    fun delete(focusLog: FocusLog)
+    fun delete(vararg focusLog: FocusLog)
 }
