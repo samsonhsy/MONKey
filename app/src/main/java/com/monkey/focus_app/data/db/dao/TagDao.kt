@@ -15,7 +15,7 @@ interface TagDao {
     fun getAll(): Flow<List<Tag>>
 
     @Query("SELECT * FROM tag_table WHERE tag_id IN (:id)")
-    fun getSessionsById(id: Int): Tag
+    fun getTagsById(id: Int): Tag
 
     @Insert
     suspend fun insertAll(vararg tag: Tag)
