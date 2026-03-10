@@ -1,4 +1,4 @@
-package com.monkey.focus_app.data.db.entitiy
+package com.monkey.focus_app.data.db.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -9,7 +9,7 @@ import androidx.room.PrimaryKey
     tableName = "reward_item"
 )
 data class RewardItem(
-    @PrimaryKey @ColumnInfo(name = "reward_item_id") val rewardItemID: Int,
+    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "reward_item_id") val rewardItemID: Int,
     @ColumnInfo(name = "reward_item_name") val rewardItemName: String,
     val description: String,
     val cost: Int,
