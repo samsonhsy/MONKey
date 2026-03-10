@@ -4,10 +4,10 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity
+@Entity(tableName = "tag_table")
 data class Tag(
-    @PrimaryKey val tagID: Int,
-    @ColumnInfo val name: String,
-    @ColumnInfo val colorHex: String, // e.g. #FFFF00
-    @ColumnInfo val packageNames: List<String>,
+    @PrimaryKey @ColumnInfo(name = "session_id") val tagID: Int,
+    @ColumnInfo(name="tag_name") val tagName: String,
+    @ColumnInfo(name="color_hex") val colorHex: String, // e.g. #FFFF00
+    @ColumnInfo(name = "package_names") val packageNames: List<String>,
 )
