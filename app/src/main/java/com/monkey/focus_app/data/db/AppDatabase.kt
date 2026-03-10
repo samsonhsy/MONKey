@@ -1,6 +1,8 @@
 package com.monkey.focus_app.data.db
 
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.monkey.focus_app.data.db.dao.TagDao
@@ -24,7 +26,7 @@ import com.monkey.focus_app.data.db.entity.UserStats
     version = 1
 )
 @TypeConverters(
-    TypeConverter::class
+    Converters::class
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun tagDao(): TagDao
@@ -32,4 +34,14 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun focusLogDao(): FocusLogDao
     abstract fun rewardItemDao(): RewardItemDao
     abstract fun userStatsDao(): UserStatsDao
+}
+
+object DatabaseBuilder{
+    @Volatile private var INSTANCE: AppDatabase? = null
+    fun getInstance(context: Context): AppDatabase {
+        return INSTANCE ?: synchronized(this) {
+            Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "monkey_database")
+                .build().also { INSTANCE = it }
+        }
+    }
 }
