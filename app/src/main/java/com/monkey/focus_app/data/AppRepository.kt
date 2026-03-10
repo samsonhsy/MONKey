@@ -5,11 +5,11 @@ import com.monkey.focus_app.data.db.dao.RewardItemDao
 import com.monkey.focus_app.data.db.dao.SessionDao
 import com.monkey.focus_app.data.db.dao.TagDao
 import com.monkey.focus_app.data.db.dao.UserStatsDao
-import com.monkey.focus_app.data.db.entitiy.FocusLog
-import com.monkey.focus_app.data.db.entitiy.RewardItem
-import com.monkey.focus_app.data.db.entitiy.Session
-import com.monkey.focus_app.data.db.entitiy.Tag
-import com.monkey.focus_app.data.db.entitiy.UserStats
+import com.monkey.focus_app.data.db.entity.FocusLog
+import com.monkey.focus_app.data.db.entity.RewardItem
+import com.monkey.focus_app.data.db.entity.Session
+import com.monkey.focus_app.data.db.entity.Tag
+import com.monkey.focus_app.data.db.entity.UserStats
 
 class AppRepository(
     private val focusLogDao: FocusLogDao,
@@ -19,58 +19,61 @@ class AppRepository(
     private val userStatsDao: UserStatsDao,
     ) {
 /*--------------------------------------------------------------Focus Log------------------------------------------------------- */
-    fun getAllFocusLog() = focusLogDao.getAll()
+    suspend fun getAllFocusLog() = focusLogDao.getAll()
 
-    fun getAllFocusLogByIds(focusLogID: IntArray) = focusLogDao.loadAllByIds(focusLogID)
+    suspend fun getAllFocusLogByIds(focusLogID: IntArray) = focusLogDao.loadAllByIds(focusLogID)
 
-    fun getSessionByFocusIds(focusLogID: IntArray) = focusLogDao.findSessionByIds(focusLogID)
+    suspend fun getSessionByFocusIds(focusLogID: IntArray) = focusLogDao.findSessionByIds(focusLogID)
 
-    fun insertAllFocusLog(vararg focusLog: FocusLog) = focusLogDao.insertAll(*focusLog)
+    suspend fun insertAllFocusLog(vararg focusLog: FocusLog) = focusLogDao.insertAll(*focusLog)
 
-    fun deleteFocusLog(vararg focusLog: FocusLog) = focusLogDao.delete(*focusLog)
+    suspend fun deleteFocusLog(vararg focusLog: FocusLog) = focusLogDao.delete(*focusLog)
 
 /*--------------------------------------------------------------Reward--------------------------------------------------------- */
-    fun getAllReward() = rewardDao.getAll()
+suspend fun getAllReward() = rewardDao.getAll()
 
-    fun getAllRewardByIds(rewardItemID: IntArray) = rewardDao.loadAllByIds(rewardItemID)
+    suspend fun getAllRewardByIds(rewardItemID: IntArray) = rewardDao.loadAllByIds(rewardItemID)
 
-    fun getAllRewardByNames(rewardItemName: Array<String>) = rewardDao.loadAllByNames(rewardItemName)
+    suspend fun getAllRewardByNames(rewardItemName: Array<String>) = rewardDao.loadAllByNames(rewardItemName)
 
-    fun getAllRewardWithinCost(rewardItemCost: Int) = rewardDao.loadAllWithinCost(rewardItemCost)
+    suspend fun getAllRewardWithinCost(rewardItemCost: Int) = rewardDao.loadAllWithinCost(rewardItemCost)
 
-    fun insertAllReward(vararg rewardItem: RewardItem) = rewardDao.insertAll(*rewardItem)
+    suspend fun insertAllReward(vararg rewardItem: RewardItem) = rewardDao.insertAll(*rewardItem)
 
-    fun deleteReward(rewardItem: RewardItem) = rewardDao.delete(rewardItem)
+    suspend fun deleteReward(rewardItem: RewardItem) = rewardDao.delete(rewardItem)
 /*--------------------------------------------------------------Session------------------------------------------------------- */
 
     fun getAllSession() = sessionDao.getAll()
 
-    fun getAllSessionById(id: Int) = sessionDao.getSessionsById(id)
+    suspend fun getAllSessionById(id: Int) = sessionDao.getSessionsById(id)
 
     fun getAllActiveSession() = sessionDao.getActiveSession()
 
-    fun insertAllSession(vararg session: Session) = sessionDao.insertAll(*session)
+    suspend fun insertAllSession(vararg session: Session) = sessionDao.insertAll(*session)
 
-    fun updateAllSession(vararg session: Session) = sessionDao.updateAll(*session)
+    suspend fun updateAllSession(vararg session: Session) = sessionDao.updateAll(*session)
 
-    fun deleteSession(vararg session: Session) = sessionDao.delete(*session)
+    suspend fun deleteSession(vararg session: Session) = sessionDao.delete(*session)
 
 /*--------------------------------------------------------------Tag---------------------------------------------------------- */
 
     fun getAllTag() = tagDao.getAll()
 
-    fun getTagsById(id: Int) = tagDao.getTagsById(id)
+    suspend fun getTagsById(id: Int) = tagDao.getTagsById(id)
 
-    fun insertAllTag(vararg tag: Tag) = tagDao.insertAll(*tag)
+    suspend fun insertAllTag(vararg tag: Tag) = tagDao.insertAll(*tag)
 
-    fun updateAllTag(vararg tag: Tag) = tagDao.updateAll(*tag)
+    suspend fun updateAllTag(vararg tag: Tag) = tagDao.updateAll(*tag)
 
-    fun deleteTag(vararg tag: Tag) = tagDao.delete(*tag)
+    suspend fun deleteTag(vararg tag: Tag) = tagDao.delete(*tag)
 
 /*--------------------------------------------------------------User Stats--------------------------------------------------- */
 
     fun getAllUserStats() = userStatsDao.getAll()
 
-    fun updateAllUserStats(userStats: UserStats) = userStatsDao.updateAll(userStats)
+    suspend fun insertAllUserStats(userStats: UserStats) = userStatsDao.insert(userStats)
+
+    suspend fun updateAllUserStats(userStats: UserStats) = userStatsDao.update(userStats)
+
 
 }

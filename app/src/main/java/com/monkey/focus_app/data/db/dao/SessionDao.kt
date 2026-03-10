@@ -21,7 +21,7 @@ interface SessionDao {
     fun getActiveSession(): Flow<Session?>
 
     @Insert
-    fun insertAll(vararg session: Session)
+    suspend fun insertAll(vararg session: Session)
 
     @Update
     suspend fun updateAll(vararg session: Session)
