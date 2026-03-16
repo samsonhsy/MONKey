@@ -25,7 +25,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.monkey.focus_app.ui.theme.MONKeyTheme
-import java.util.Locale.getDefault
 
 class WarningActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,7 +61,6 @@ fun Warning(modifier: Modifier = Modifier) {
         )
         Text(
             text = ("Are you sure that you want to leave focus mode? \n You will lose your reward if the time is not yet the end time.").uppercase(
-                getDefault()
             ),
             modifier = Modifier.padding(50.dp, 0.dp),
             textAlign = TextAlign.Center,

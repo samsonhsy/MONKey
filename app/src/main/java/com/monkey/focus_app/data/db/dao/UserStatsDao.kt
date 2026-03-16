@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.monkey.focus_app.data.db.entity.UserStats
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UserStatsDao {
