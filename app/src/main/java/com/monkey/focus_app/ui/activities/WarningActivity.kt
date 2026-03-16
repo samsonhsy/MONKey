@@ -1,4 +1,4 @@
-package com.monkey.focus_app.ui.views
+package com.monkey.focus_app.ui.activities
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -11,10 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.magnifier
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.materialIcon
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -28,7 +25,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.monkey.focus_app.ui.theme.MONKeyTheme
-import java.util.Locale
 import java.util.Locale.getDefault
 
 class WarningActivity : ComponentActivity() {
@@ -60,7 +56,9 @@ fun Warning(modifier: Modifier = Modifier) {
         Icon(
             Icons.Outlined.Warning,
             contentDescription = "Warning",
-            modifier = Modifier.fillMaxWidth().height(250.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(250.dp)
         )
         Text(
             text = ("Are you sure that you want to leave focus mode? \n You will lose your reward if the time is not yet the end time.").uppercase(
@@ -70,12 +68,25 @@ fun Warning(modifier: Modifier = Modifier) {
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.headlineSmall
         )
-//        Button(
-//            onClick = TODO()
-//        ) { }
-//        Spacer(
-//            modifier = Modifier.weight(0.3f)
-//        )
+        Spacer(
+            Modifier.weight(0.2f)
+        )
+        Button(
+            content = {
+                Text(
+                    text = "Yes, I am leaving",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            },
+            onClick = { println("hello") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(50.dp, 0.dp)
+                .height(50.dp)
+        )
+        Spacer(
+            modifier = Modifier.weight(0.3f)
+        )
     }
 }
 
