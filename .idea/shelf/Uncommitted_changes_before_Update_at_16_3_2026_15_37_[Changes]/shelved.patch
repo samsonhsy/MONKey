@@ -1,0 +1,849 @@
+Index: build.gradle.kts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>// Top-level build file where you can add configuration options common to all sub-projects/modules.\r\nplugins {\r\n    alias(libs.plugins.android.application) apply false\r\n    alias(libs.plugins.kotlin.compose) apply false\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build.gradle.kts b/build.gradle.kts
+--- a/build.gradle.kts	(revision b0708ed66a7074b37533f14b11df024c373437bb)
++++ b/build.gradle.kts	(date 1773645702139)
+@@ -2,4 +2,7 @@
+ plugins {
+     alias(libs.plugins.android.application) apply false
+     alias(libs.plugins.kotlin.compose) apply false
++    alias(libs.plugins.ksp) apply false
++    alias(libs.plugins.kotlin.serialization) apply false
++
+ }
+\ No newline at end of file
+Index: gradle/libs.versions.toml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>[versions]\r\nagp = \"9.0.1\"\r\ncoreKtx = \"1.17.0\"\r\njunit = \"4.13.2\"\r\njunitVersion = \"1.3.0\"\r\nespressoCore = \"3.7.0\"\r\nlifecycleRuntimeKtx = \"2.10.0\"\r\nactivityCompose = \"1.12.4\"\r\nkotlin = \"2.0.21\"\r\ncomposeBom = \"2024.09.00\"\r\n\r\n[libraries]\r\nandroidx-core-ktx = { group = \"androidx.core\", name = \"core-ktx\", version.ref = \"coreKtx\" }\r\njunit = { group = \"junit\", name = \"junit\", version.ref = \"junit\" }\r\nandroidx-junit = { group = \"androidx.test.ext\", name = \"junit\", version.ref = \"junitVersion\" }\r\nandroidx-espresso-core = { group = \"androidx.test.espresso\", name = \"espresso-core\", version.ref = \"espressoCore\" }\r\nandroidx-lifecycle-runtime-ktx = { group = \"androidx.lifecycle\", name = \"lifecycle-runtime-ktx\", version.ref = \"lifecycleRuntimeKtx\" }\r\nandroidx-activity-compose = { group = \"androidx.activity\", name = \"activity-compose\", version.ref = \"activityCompose\" }\r\nandroidx-compose-bom = { group = \"androidx.compose\", name = \"compose-bom\", version.ref = \"composeBom\" }\r\nandroidx-compose-ui = { group = \"androidx.compose.ui\", name = \"ui\" }\r\nandroidx-compose-ui-graphics = { group = \"androidx.compose.ui\", name = \"ui-graphics\" }\r\nandroidx-compose-ui-tooling = { group = \"androidx.compose.ui\", name = \"ui-tooling\" }\r\nandroidx-compose-ui-tooling-preview = { group = \"androidx.compose.ui\", name = \"ui-tooling-preview\" }\r\nandroidx-compose-ui-test-manifest = { group = \"androidx.compose.ui\", name = \"ui-test-manifest\" }\r\nandroidx-compose-ui-test-junit4 = { group = \"androidx.compose.ui\", name = \"ui-test-junit4\" }\r\nandroidx-compose-material3 = { group = \"androidx.compose.material3\", name = \"material3\" }\r\n\r\n[plugins]\r\nandroid-application = { id = \"com.android.application\", version.ref = \"agp\" }\r\nkotlin-compose = { id = \"org.jetbrains.kotlin.plugin.compose\", version.ref = \"kotlin\" }\r\n\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/gradle/libs.versions.toml b/gradle/libs.versions.toml
+--- a/gradle/libs.versions.toml	(revision b0708ed66a7074b37533f14b11df024c373437bb)
++++ b/gradle/libs.versions.toml	(date 1773646352314)
+@@ -1,16 +1,29 @@
+ [versions]
+ agp = "9.0.1"
+ coreKtx = "1.17.0"
++gson = "2.13.2"
+ junit = "4.13.2"
+ junitVersion = "1.3.0"
+ espressoCore = "3.7.0"
+ lifecycleRuntimeKtx = "2.10.0"
+ activityCompose = "1.12.4"
+-kotlin = "2.0.21"
+-composeBom = "2024.09.00"
++kotlin = "2.1.21"
++composeBom = "2026.02.01"
++material = "1.10.5"
++material3 = "1.4.0"
++material3AdaptiveNavigationSuite = "1.5.0-alpha15"
++navigationCompose = "2.9.7"
++room = "2.8.4"
++coroutines = "1.10.2"
++ksp = "2.3.6"
+ 
+ [libraries]
++androidx-compose-material = { module = "androidx.compose.material:material", version.ref = "material" }
++androidx-compose-material3-adaptive-navigation-suite = { module = "androidx.compose.material3:material3-adaptive-navigation-suite", version.ref = "material3AdaptiveNavigationSuite" }
++androidx-compose-material3-window-size-class1 = { module = "androidx.compose.material3:material3-window-size-class", version.ref = "material3" }
+ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
++androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
++gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+ junit = { group = "junit", name = "junit", version.ref = "junit" }
+ androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+ androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+@@ -25,7 +38,18 @@
+ androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+ androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+ 
++androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
++androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
++androidx-room-ktx     = { group = "androidx.room", name = "room-ktx",     version.ref = "room" }
++androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
++androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
++androidx-lifecycle-viewmodel-ktx     = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx",     version.ref = "lifecycleRuntimeKtx" }
++kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
++
++
++
+ [plugins]
+ android-application = { id = "com.android.application", version.ref = "agp" }
+ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+-
++ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
++kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+Index: app/build.gradle.kts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>plugins {\r\n    alias(libs.plugins.android.application)\r\n    alias(libs.plugins.kotlin.compose)\r\n}\r\n\r\nandroid {\r\n    namespace = \"com.monkey.focus_app\"\r\n    compileSdk {\r\n        version = release(36)\r\n    }\r\n\r\n    defaultConfig {\r\n        applicationId = \"com.monkey.focus_app\"\r\n        minSdk = 26\r\n        targetSdk = 36\r\n        versionCode = 1\r\n        versionName = \"1.0\"\r\n\r\n        testInstrumentationRunner = \"androidx.test.runner.AndroidJUnitRunner\"\r\n    }\r\n\r\n    buildTypes {\r\n        release {\r\n            isMinifyEnabled = false\r\n            proguardFiles(\r\n                getDefaultProguardFile(\"proguard-android-optimize.txt\"),\r\n                \"proguard-rules.pro\"\r\n            )\r\n        }\r\n    }\r\n    compileOptions {\r\n        sourceCompatibility = JavaVersion.VERSION_11\r\n        targetCompatibility = JavaVersion.VERSION_11\r\n    }\r\n    buildFeatures {\r\n        compose = true\r\n    }\r\n}\r\n\r\ndependencies {\r\n    implementation(libs.androidx.core.ktx)\r\n    implementation(libs.androidx.lifecycle.runtime.ktx)\r\n    implementation(libs.androidx.activity.compose)\r\n    implementation(platform(libs.androidx.compose.bom))\r\n    implementation(libs.androidx.compose.ui)\r\n    implementation(libs.androidx.compose.ui.graphics)\r\n    implementation(libs.androidx.compose.ui.tooling.preview)\r\n    implementation(libs.androidx.compose.material3)\r\n    testImplementation(libs.junit)\r\n    androidTestImplementation(libs.androidx.junit)\r\n    androidTestImplementation(libs.androidx.espresso.core)\r\n    androidTestImplementation(platform(libs.androidx.compose.bom))\r\n    androidTestImplementation(libs.androidx.compose.ui.test.junit4)\r\n    debugImplementation(libs.androidx.compose.ui.tooling)\r\n    debugImplementation(libs.androidx.compose.ui.test.manifest)\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+--- a/app/build.gradle.kts	(revision b0708ed66a7074b37533f14b11df024c373437bb)
++++ b/app/build.gradle.kts	(date 1773646352331)
+@@ -1,6 +1,8 @@
+ plugins {
+     alias(libs.plugins.android.application)
+     alias(libs.plugins.kotlin.compose)
++    alias(libs.plugins.ksp)
++    alias(libs.plugins.kotlin.serialization)
+ }
+ 
+ android {
+@@ -53,4 +55,16 @@
+     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+     debugImplementation(libs.androidx.compose.ui.tooling)
+     debugImplementation(libs.androidx.compose.ui.test.manifest)
++    implementation(libs.gson)
++    implementation(libs.androidx.navigation.compose)
++    implementation(libs.androidx.room.runtime)
++    implementation(libs.androidx.room.ktx)
++    ksp(libs.androidx.room.compiler)
++    implementation(libs.androidx.lifecycle.viewmodel.compose)
++    implementation(libs.androidx.lifecycle.viewmodel.ktx)
++    implementation(libs.kotlinx.coroutines.android)
++    implementation(libs.androidx.material3)
++    implementation(libs.androidx.compose.material3.window.size.class1)
++    implementation(libs.androidx.compose.material3.adaptive.navigation.suite)
++    implementation(libs.androidx.compose.material)
+ }
+\ No newline at end of file
+Index: app/src/main/java/com/monkey/focus_app/data/db/entity/Tag.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/db/entity/Tag.kt b/app/src/main/java/com/monkey/focus_app/data/db/entity/Tag.kt
+new file mode 100644
+--- /dev/null	(date 1773645702137)
++++ b/app/src/main/java/com/monkey/focus_app/data/db/entity/Tag.kt	(date 1773645702137)
+@@ -0,0 +1,13 @@
++package com.monkey.focus_app.data.db.entity
++
++import androidx.room.ColumnInfo
++import androidx.room.Entity
++import androidx.room.PrimaryKey
++
++@Entity(tableName = "tag_table")
++data class Tag(
++    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "tag_id") val tagID: Int,
++    @ColumnInfo(name="tag_name") val tagName: String,
++    @ColumnInfo(name="color_hex") val colorHex: String, // e.g. #FFFF00
++    @ColumnInfo(name = "package_names") val packageNames: List<String>,
++)
+\ No newline at end of file
+Index: app/src/main/java/com/monkey/focus_app/data/db/entity/Session.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/db/entity/Session.kt b/app/src/main/java/com/monkey/focus_app/data/db/entity/Session.kt
+new file mode 100644
+--- /dev/null	(date 1773645702137)
++++ b/app/src/main/java/com/monkey/focus_app/data/db/entity/Session.kt	(date 1773645702137)
+@@ -0,0 +1,29 @@
++package com.monkey.focus_app.data.db.entity
++
++import androidx.room.ColumnInfo
++import androidx.room.Entity
++import androidx.room.ForeignKey
++import androidx.room.PrimaryKey
++
++@Entity(tableName = "session_table",
++    foreignKeys = [
++        ForeignKey(
++            entity = Tag::class,
++            parentColumns = arrayOf("tag_id"),
++            childColumns = arrayOf("tag_id"),
++            onDelete = ForeignKey.SET_NULL
++        ),
++    ])
++data class Session(
++    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "session_id") val sessionID: Int,
++    @ColumnInfo(name = "session_name") val sessionName: String,
++    @ColumnInfo(name = "start_datetime") val startDateTime: Long,
++    @ColumnInfo(name="end_datetime") val endDateTime: Long,
++    @ColumnInfo(name="duration_min") val durationMin: Int,
++    val recurrence: String,
++    @ColumnInfo(name="tag_id")val tagID: Int?,
++    @ColumnInfo(name="unlock_key_level")val unlockKeyLevel: String,
++    @ColumnInfo(name="reminder_offset_minutes")val reminderOffsetMinutes: String,
++    @ColumnInfo(name="is_active")val isActive: Boolean,
++    @ColumnInfo(name="unlock_phrase")val unlockPhrase: String?,
++)
+\ No newline at end of file
+Index: app/src/main/java/com/monkey/focus_app/data/db/entity/UserStats.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/db/entity/UserStats.kt b/app/src/main/java/com/monkey/focus_app/data/db/entity/UserStats.kt
+new file mode 100644
+--- /dev/null	(date 1773645702137)
++++ b/app/src/main/java/com/monkey/focus_app/data/db/entity/UserStats.kt	(date 1773645702137)
+@@ -0,0 +1,14 @@
++package com.monkey.focus_app.data.db.entity
++
++import androidx.room.ColumnInfo
++import androidx.room.Entity
++import androidx.room.PrimaryKey
++
++@Entity(
++    tableName = "user_stats"
++)
++data class UserStats(
++    @PrimaryKey(autoGenerate = true) val id: Int = 1,
++    @ColumnInfo(name = "total_monkney") val totalMonkney: Int,
++    @ColumnInfo(name = "total_focus_minutes") val totalFocusMinutes: Int
++)
+\ No newline at end of file
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"ExternalStorageConfigurationManager\" enabled=\"true\" />\r\n  <component name=\"ProjectRootManager\" version=\"2\" languageLevel=\"JDK_21\" default=\"true\" project-jdk-name=\"jbr-21\" project-jdk-type=\"JavaSDK\" />\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/misc.xml b/.idea/misc.xml
+--- a/.idea/misc.xml	(revision b0708ed66a7074b37533f14b11df024c373437bb)
++++ b/.idea/misc.xml	(date 1773646534912)
+@@ -1,5 +1,9 @@
+-<?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+   <component name="ExternalStorageConfigurationManager" enabled="true" />
+-  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="jbr-21" project-jdk-type="JavaSDK" />
++  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="jbr-21" project-jdk-type="JavaSDK">
++    <output url="file://$PROJECT_DIR$/build/classes" />
++  </component>
++  <component name="ProjectType">
++    <option name="id" value="Android" />
++  </component>
+ </project>
+\ No newline at end of file
+Index: app/src/main/java/com/monkey/focus_app/data/db/dao/UserStatsDao.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/db/dao/UserStatsDao.kt b/app/src/main/java/com/monkey/focus_app/data/db/dao/UserStatsDao.kt
+new file mode 100644
+--- /dev/null	(date 1773645702136)
++++ b/app/src/main/java/com/monkey/focus_app/data/db/dao/UserStatsDao.kt	(date 1773645702136)
+@@ -0,0 +1,21 @@
++package com.monkey.focus_app.data.db.dao
++
++import androidx.room.Dao
++import androidx.room.Insert
++import androidx.room.Query
++import androidx.room.Update
++import com.monkey.focus_app.data.db.entity.UserStats
++import kotlinx.coroutines.flow.Flow
++
++@Dao
++interface UserStatsDao {
++
++    @Query("SELECT * FROM user_stats")
++    fun getAll(): Flow<UserStats?>
++
++    @Insert
++    suspend fun insert(userStats: UserStats)
++
++    @Update
++    suspend fun update(userStats: UserStats)
++}
+\ No newline at end of file
+Index: app/src/main/java/com/monkey/focus_app/data/db/dao/TagDao.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/db/dao/TagDao.kt b/app/src/main/java/com/monkey/focus_app/data/db/dao/TagDao.kt
+new file mode 100644
+--- /dev/null	(date 1773645702135)
++++ b/app/src/main/java/com/monkey/focus_app/data/db/dao/TagDao.kt	(date 1773645702135)
+@@ -0,0 +1,28 @@
++package com.monkey.focus_app.data.db.dao
++
++import androidx.room.Dao
++import androidx.room.Delete
++import androidx.room.Insert
++import androidx.room.Query
++import androidx.room.Update
++import com.monkey.focus_app.data.db.entity.Tag
++import kotlinx.coroutines.flow.Flow
++
++
++@Dao
++interface TagDao {
++    @Query("SELECT * FROM tag_table")
++    fun getAll(): Flow<List<Tag>>
++
++    @Query("SELECT * FROM tag_table WHERE tag_id = :id")
++    suspend fun getTagsById(id: Int): Tag
++
++    @Insert
++    suspend fun insertAll(vararg tag: Tag)
++
++    @Update
++    suspend fun updateAll(vararg tag: Tag)
++
++    @Delete
++    suspend fun delete(vararg tag: Tag)
++}
+\ No newline at end of file
+Index: app/src/main/java/com/monkey/focus_app/data/db/entity/RewardItem.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/db/entity/RewardItem.kt b/app/src/main/java/com/monkey/focus_app/data/db/entity/RewardItem.kt
+new file mode 100644
+--- /dev/null	(date 1773645702137)
++++ b/app/src/main/java/com/monkey/focus_app/data/db/entity/RewardItem.kt	(date 1773645702137)
+@@ -0,0 +1,18 @@
++package com.monkey.focus_app.data.db.entity
++
++import androidx.room.ColumnInfo
++import androidx.room.Entity
++import androidx.room.PrimaryKey
++
++
++@Entity(
++    tableName = "reward_item"
++)
++data class RewardItem(
++    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "reward_item_id") val rewardItemID: Int,
++    @ColumnInfo(name = "reward_item_name") val rewardItemName: String,
++    val description: String,
++    val cost: Int,
++    @ColumnInfo(name = "is_unlocked") val isUnlocked: Boolean,
++    @ColumnInfo(name = "asset_name") val assetName: String
++)
+\ No newline at end of file
+Index: .idea/vcs.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"VcsDirectoryMappings\">\r\n    <mapping directory=\"$PROJECT_DIR$\" vcs=\"Git\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/vcs.xml b/.idea/vcs.xml
+--- a/.idea/vcs.xml	(revision b0708ed66a7074b37533f14b11df024c373437bb)
++++ b/.idea/vcs.xml	(date 1773646535603)
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+   <component name="VcsDirectoryMappings">
+-    <mapping directory="$PROJECT_DIR$" vcs="Git" />
++    <mapping directory="" vcs="Git" />
+   </component>
+ </project>
+\ No newline at end of file
+Index: app/src/main/java/com/monkey/focus_app/data/db/entity/FocusLog.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/db/entity/FocusLog.kt b/app/src/main/java/com/monkey/focus_app/data/db/entity/FocusLog.kt
+new file mode 100644
+--- /dev/null	(date 1773645702136)
++++ b/app/src/main/java/com/monkey/focus_app/data/db/entity/FocusLog.kt	(date 1773645702136)
+@@ -0,0 +1,26 @@
++package com.monkey.focus_app.data.db.entity
++
++import androidx.room.ColumnInfo
++import androidx.room.Entity
++import androidx.room.ForeignKey
++import androidx.room.PrimaryKey
++
++@Entity(
++    tableName = "focus_log",
++    foreignKeys = [
++        ForeignKey(
++            entity = Session::class,
++            parentColumns = ["session_id"],
++            childColumns = ["session_id"],
++            onDelete = ForeignKey.SET_NULL
++        )
++    ]
++)
++data class FocusLog(
++    @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "focus_log_id") val focusLogID: Int,
++    @ColumnInfo(name = "session_id") val sessionID: Int?,
++    @ColumnInfo(name = "actual_start_time") val actualStartTime: Long,
++    @ColumnInfo(name = "actual_end_time") val actualEndTime: Long,
++    @ColumnInfo(name = "was_hard_unlocked") val wasHardUnlocked: Boolean,
++    @ColumnInfo(name = "points_earned") val pointsEarned: Int
++)
+\ No newline at end of file
+Index: .idea/deploymentTargetSelector.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"deploymentTargetSelector\">\r\n    <selectionStates>\r\n      <SelectionState runConfigName=\"WarningActivity\">\r\n        <option name=\"selectionMode\" value=\"DROPDOWN\" />\r\n      </SelectionState>\r\n    </selectionStates>\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/deploymentTargetSelector.xml b/.idea/deploymentTargetSelector.xml
+--- a/.idea/deploymentTargetSelector.xml	(revision b0708ed66a7074b37533f14b11df024c373437bb)
++++ b/.idea/deploymentTargetSelector.xml	(date 1773646533516)
+@@ -2,7 +2,7 @@
+ <project version="4">
+   <component name="deploymentTargetSelector">
+     <selectionStates>
+-      <SelectionState runConfigName="WarningActivity">
++      <SelectionState runConfigName="app">
+         <option name="selectionMode" value="DROPDOWN" />
+       </SelectionState>
+     </selectionStates>
+Index: app/src/test/java/com/monkey/focus_app/test/data/db/TypeConverterTest.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/test/java/com/monkey/focus_app/test/data/db/TypeConverterTest.kt b/app/src/test/java/com/monkey/focus_app/test/data/db/TypeConverterTest.kt
+new file mode 100644
+--- /dev/null	(date 1773645702138)
++++ b/app/src/test/java/com/monkey/focus_app/test/data/db/TypeConverterTest.kt	(date 1773645702138)
+@@ -0,0 +1,51 @@
++package com.monkey.focus_app.test.data.db
++
++import com.monkey.focus_app.data.db.Converters
++import org.junit.Assert
++import org.junit.Assert.assertThrows
++import org.junit.Test
++
++class TypeConverterTest {
++
++    private val typeConverters = Converters()
++
++    @Test
++    fun testFromJsonToListOfString() {
++        val json = """["one","two","three"]"""
++        val expected = listOf("one", "two", "three")
++        Assert.assertEquals(expected, typeConverters.fromJsonToListOfString(json))
++    }
++
++    @Test
++    fun testFromListOfStringToJson() {
++        val list = listOf("one", "two", "three")
++        val expected = """["one","two","three"]"""
++        Assert.assertEquals(expected, typeConverters.fromListOfStringToJson(list))
++    }
++
++    @Test
++    fun testFromJsonToListOfStringWithNullThrowsOrReturnsNullSafety() {
++
++        val exception: NullPointerException? =
++            assertThrows(NullPointerException::class.java, {
++                typeConverters.fromJsonToListOfString(null)
++            })
++        Assert.assertEquals("fromJson(...) must not be null", exception?.message)
++    }
++
++    @Test
++    fun fromJsonToListOfStringWithEmptyArrayReturnsEmptyList() {
++        val json = "[]"
++        val result = typeConverters.fromJsonToListOfString(json)
++        Assert.assertEquals(emptyList<String>(), result)
++    }
++
++    @Test
++    fun fromListOfStringToJson_withNullElement_returnsJsonWithNull() {
++        val list: List<String?> = listOf("x", null, "y")
++        val json = typeConverters.fromListOfStringToJson(list)
++        val expected = """["x",null,"y"]"""
++        Assert.assertEquals(expected, json)
++    }
++
++}
+\ No newline at end of file
+Index: .idea/dictionaries/project.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/dictionaries/project.xml b/.idea/dictionaries/project.xml
+new file mode 100644
+--- /dev/null	(date 1773645702130)
++++ b/.idea/dictionaries/project.xml	(date 1773645702130)
+@@ -0,0 +1,7 @@
++<component name="ProjectDictionaryState">
++  <dictionary name="project">
++    <words>
++      <w>monkney</w>
++    </words>
++  </dictionary>
++</component>
+\ No newline at end of file
+Index: .idea/.gitignore
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/.gitignore b/.idea/.gitignore
+new file mode 100644
+--- /dev/null	(date 1773645702129)
++++ b/.idea/.gitignore	(date 1773645702129)
+@@ -0,0 +1,3 @@
++# Default ignored files
++/shelf/
++/workspace.xml
+Index: app/src/main/java/com/monkey/focus_app/data/AppRepository.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/AppRepository.kt b/app/src/main/java/com/monkey/focus_app/data/AppRepository.kt
+new file mode 100644
+--- /dev/null	(date 1773645702133)
++++ b/app/src/main/java/com/monkey/focus_app/data/AppRepository.kt	(date 1773645702133)
+@@ -0,0 +1,79 @@
++package com.monkey.focus_app.data
++
++import com.monkey.focus_app.data.db.dao.FocusLogDao
++import com.monkey.focus_app.data.db.dao.RewardItemDao
++import com.monkey.focus_app.data.db.dao.SessionDao
++import com.monkey.focus_app.data.db.dao.TagDao
++import com.monkey.focus_app.data.db.dao.UserStatsDao
++import com.monkey.focus_app.data.db.entity.FocusLog
++import com.monkey.focus_app.data.db.entity.RewardItem
++import com.monkey.focus_app.data.db.entity.Session
++import com.monkey.focus_app.data.db.entity.Tag
++import com.monkey.focus_app.data.db.entity.UserStats
++
++class AppRepository(
++    private val focusLogDao: FocusLogDao,
++    private val rewardDao: RewardItemDao,
++    private val sessionDao: SessionDao,
++    private val tagDao: TagDao,
++    private val userStatsDao: UserStatsDao,
++    ) {
++/*--------------------------------------------------------------Focus Log------------------------------------------------------- */
++    suspend fun getAllFocusLog() = focusLogDao.getAll()
++
++    suspend fun getAllFocusLogByIds(focusLogID: IntArray) = focusLogDao.loadAllByIds(focusLogID)
++
++    suspend fun getSessionByFocusIds(focusLogID: IntArray) = focusLogDao.findSessionByIds(focusLogID)
++
++    suspend fun insertAllFocusLog(vararg focusLog: FocusLog) = focusLogDao.insertAll(*focusLog)
++
++    suspend fun deleteFocusLog(vararg focusLog: FocusLog) = focusLogDao.delete(*focusLog)
++
++/*--------------------------------------------------------------Reward--------------------------------------------------------- */
++suspend fun getAllReward() = rewardDao.getAll()
++
++    suspend fun getAllRewardByIds(rewardItemID: IntArray) = rewardDao.loadAllByIds(rewardItemID)
++
++    suspend fun getAllRewardByNames(rewardItemName: Array<String>) = rewardDao.loadAllByNames(rewardItemName)
++
++    suspend fun getAllRewardWithinCost(rewardItemCost: Int) = rewardDao.loadAllWithinCost(rewardItemCost)
++
++    suspend fun insertAllReward(vararg rewardItem: RewardItem) = rewardDao.insertAll(*rewardItem)
++
++    suspend fun deleteReward(rewardItem: RewardItem) = rewardDao.delete(rewardItem)
++/*--------------------------------------------------------------Session------------------------------------------------------- */
++
++    fun getAllSession() = sessionDao.getAll()
++
++    suspend fun getAllSessionById(id: Int) = sessionDao.getSessionsById(id)
++
++    fun getAllActiveSession() = sessionDao.getActiveSession()
++
++    suspend fun insertAllSession(vararg session: Session) = sessionDao.insertAll(*session)
++
++    suspend fun updateAllSession(vararg session: Session) = sessionDao.updateAll(*session)
++
++    suspend fun deleteSession(vararg session: Session) = sessionDao.delete(*session)
++
++/*--------------------------------------------------------------Tag---------------------------------------------------------- */
++
++    fun getAllTag() = tagDao.getAll()
++
++    suspend fun getTagsById(id: Int) = tagDao.getTagsById(id)
++
++    suspend fun insertAllTag(vararg tag: Tag) = tagDao.insertAll(*tag)
++
++    suspend fun updateAllTag(vararg tag: Tag) = tagDao.updateAll(*tag)
++
++    suspend fun deleteTag(vararg tag: Tag) = tagDao.delete(*tag)
++
++/*--------------------------------------------------------------User Stats--------------------------------------------------- */
++
++    fun getAllUserStats() = userStatsDao.getAll()
++
++    suspend fun insertAllUserStats(userStats: UserStats) = userStatsDao.insert(userStats)
++
++    suspend fun updateAllUserStats(userStats: UserStats) = userStatsDao.update(userStats)
++
++
++}
+\ No newline at end of file
+Index: .idea/migrations.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/migrations.xml b/.idea/migrations.xml
+new file mode 100644
+--- /dev/null	(date 1773645702131)
++++ b/.idea/migrations.xml	(date 1773645702131)
+@@ -0,0 +1,10 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="ProjectMigrations">
++    <option name="MigrateToGradleLocalJavaHome">
++      <set>
++        <option value="$PROJECT_DIR$" />
++      </set>
++    </option>
++  </component>
++</project>
+\ No newline at end of file
+Index: app/src/main/java/com/monkey/focus_app/data/db/dao/FocusLogDao.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/db/dao/FocusLogDao.kt b/app/src/main/java/com/monkey/focus_app/data/db/dao/FocusLogDao.kt
+new file mode 100644
+--- /dev/null	(date 1773645702134)
++++ b/app/src/main/java/com/monkey/focus_app/data/db/dao/FocusLogDao.kt	(date 1773645702134)
+@@ -0,0 +1,30 @@
++package com.monkey.focus_app.data.db.dao
++
++import androidx.room.Dao
++import androidx.room.Delete
++import androidx.room.Insert
++import androidx.room.Query
++import com.monkey.focus_app.data.db.entity.FocusLog
++import com.monkey.focus_app.data.db.entity.Session
++
++@Dao
++interface FocusLogDao {
++    @Query("SELECT * FROM focus_log")
++    suspend fun getAll(): List<FocusLog>
++
++    @Query("SELECT * FROM focus_log WHERE focus_log_id IN (:focusLogID)")
++    suspend fun loadAllByIds(focusLogID: IntArray): List<FocusLog>
++
++    @Query(
++        "SELECT * FROM session_table " +
++                "JOIN focus_log ON focus_log.session_id = session_table.session_id " +
++                "WHERE focus_log_id IN (:focusLogID)"
++    )
++    suspend fun findSessionByIds(focusLogID: IntArray): List<Session>
++
++    @Insert
++    suspend fun insertAll(vararg focusLog: FocusLog)
++
++    @Delete
++    suspend fun delete(vararg focusLog: FocusLog)
++}
+\ No newline at end of file
+Index: app/src/main/AndroidManifest.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\r\n    xmlns:tools=\"http://schemas.android.com/tools\">\r\n\r\n    <application\r\n        android:allowBackup=\"true\"\r\n        android:dataExtractionRules=\"@xml/data_extraction_rules\"\r\n        android:fullBackupContent=\"@xml/backup_rules\"\r\n        android:icon=\"@mipmap/ic_launcher\"\r\n        android:label=\"@string/app_name\"\r\n        android:roundIcon=\"@mipmap/ic_launcher_round\"\r\n        android:supportsRtl=\"true\"\r\n        android:theme=\"@style/Theme.MONKey\">\r\n        <activity\r\n            android:name=\".MainActivity\"\r\n            android:exported=\"true\"\r\n            android:label=\"@string/app_name\"\r\n            android:theme=\"@style/Theme.MONKey\">\r\n            <intent-filter>\r\n                <action android:name=\"android.intent.action.MAIN\" />\r\n\r\n                <category android:name=\"android.intent.category.LAUNCHER\" />\r\n            </intent-filter>\r\n        </activity>\r\n    </application>\r\n\r\n</manifest>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/AndroidManifest.xml b/app/src/main/AndroidManifest.xml
+--- a/app/src/main/AndroidManifest.xml	(revision b0708ed66a7074b37533f14b11df024c373437bb)
++++ b/app/src/main/AndroidManifest.xml	(date 1773645702132)
+@@ -23,5 +23,15 @@
+             </intent-filter>
+         </activity>
+     </application>
+-
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"
++        tools:ignore="ForegroundServicesPolicy,ManifestOrder" />
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
++    <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE"
++        tools:ignore="ProtectedPermissions" />
++    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
++    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
++    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
++    <uses-permission android:name="android.permission.READ_CALENDAR"/>
++    <uses-permission android:name="android.permission.VIBRATE"/>
++    <uses-permission android:name="android.permission.NFC"/>
+ </manifest>
+\ No newline at end of file
+Index: app/src/main/java/com/monkey/focus_app/data/db/dao/SessionDao.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/db/dao/SessionDao.kt b/app/src/main/java/com/monkey/focus_app/data/db/dao/SessionDao.kt
+new file mode 100644
+--- /dev/null	(date 1773645702135)
++++ b/app/src/main/java/com/monkey/focus_app/data/db/dao/SessionDao.kt	(date 1773645702135)
+@@ -0,0 +1,31 @@
++package com.monkey.focus_app.data.db.dao
++
++import androidx.room.Dao
++import androidx.room.Delete
++import androidx.room.Insert
++import androidx.room.Query
++import androidx.room.Update
++import com.monkey.focus_app.data.db.entity.Session
++import kotlinx.coroutines.flow.Flow
++
++
++@Dao
++interface SessionDao {
++    @Query("SELECT * FROM session_table")
++    fun getAll(): Flow<List<Session>>
++
++    @Query("SELECT * FROM session_table WHERE session_id = :id")
++    suspend fun getSessionsById(id: Int): Session?
++
++    @Query("SELECT * FROM session_table WHERE is_active = 1")
++    fun getActiveSession(): Flow<Session?>
++
++    @Insert
++    suspend fun insertAll(vararg session: Session)
++
++    @Update
++    suspend fun updateAll(vararg session: Session)
++
++    @Delete
++    suspend fun delete(vararg session: Session)
++}
+\ No newline at end of file
+Index: app/src/main/java/com/monkey/focus_app/data/db/dao/RewardItemDao.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/db/dao/RewardItemDao.kt b/app/src/main/java/com/monkey/focus_app/data/db/dao/RewardItemDao.kt
+new file mode 100644
+--- /dev/null	(date 1773645702135)
++++ b/app/src/main/java/com/monkey/focus_app/data/db/dao/RewardItemDao.kt	(date 1773645702135)
+@@ -0,0 +1,28 @@
++package com.monkey.focus_app.data.db.dao
++
++import androidx.room.Dao
++import androidx.room.Delete
++import androidx.room.Insert
++import androidx.room.Query
++import com.monkey.focus_app.data.db.entity.RewardItem
++
++@Dao
++interface RewardItemDao {
++    @Query("SELECT * FROM reward_item")
++    suspend fun getAll(): List<RewardItem>
++
++    @Query("SELECT * FROM reward_item WHERE reward_item_id IN (:rewardItemID)")
++    suspend fun loadAllByIds(rewardItemID: IntArray): List<RewardItem>
++
++    @Query("SELECT * FROM reward_item WHERE reward_item_name IN (:rewardItemName)")
++    suspend fun loadAllByNames(rewardItemName: Array<String>): List<RewardItem>
++
++    @Query(value = "SELECT * FROM reward_item WHERE cost <= (:rewardItemCost)")
++    suspend fun loadAllWithinCost(rewardItemCost: Int): RewardItem
++
++    @Insert
++    suspend fun insertAll(vararg rewardItem: RewardItem)
++
++    @Delete
++    suspend fun delete(rewardItem: RewardItem)
++}
+\ No newline at end of file
+Index: app/src/main/java/com/monkey/focus_app/data/db/AppDatabase.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/db/AppDatabase.kt b/app/src/main/java/com/monkey/focus_app/data/db/AppDatabase.kt
+new file mode 100644
+--- /dev/null	(date 1773645702133)
++++ b/app/src/main/java/com/monkey/focus_app/data/db/AppDatabase.kt	(date 1773645702133)
+@@ -0,0 +1,47 @@
++package com.monkey.focus_app.data.db
++
++import android.content.Context
++import androidx.room.Database
++import androidx.room.Room
++import androidx.room.RoomDatabase
++import androidx.room.TypeConverters
++import com.monkey.focus_app.data.db.dao.TagDao
++import com.monkey.focus_app.data.db.dao.SessionDao
++import com.monkey.focus_app.data.db.dao.FocusLogDao
++import com.monkey.focus_app.data.db.dao.RewardItemDao
++import com.monkey.focus_app.data.db.dao.UserStatsDao
++import com.monkey.focus_app.data.db.entity.FocusLog
++import com.monkey.focus_app.data.db.entity.RewardItem
++import com.monkey.focus_app.data.db.entity.Session
++import com.monkey.focus_app.data.db.entity.Tag
++import com.monkey.focus_app.data.db.entity.UserStats
++
++@Database(
++    entities = [
++        Session::class,
++        Tag::class,
++        FocusLog::class,
++        RewardItem::class,
++        UserStats::class],
++    version = 1
++)
++@TypeConverters(
++    Converters::class
++)
++abstract class AppDatabase : RoomDatabase() {
++    abstract fun tagDao(): TagDao
++    abstract fun sessionDao(): SessionDao
++    abstract fun focusLogDao(): FocusLogDao
++    abstract fun rewardItemDao(): RewardItemDao
++    abstract fun userStatsDao(): UserStatsDao
++}
++
++object DatabaseBuilder{
++    @Volatile private var INSTANCE: AppDatabase? = null
++    fun getInstance(context: Context): AppDatabase {
++        return INSTANCE ?: synchronized(this) {
++            Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "monkey_database")
++                .build().also { INSTANCE = it }
++        }
++    }
++}
+Index: app/src/main/java/com/monkey/focus_app/data/db/Converters.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/monkey/focus_app/data/db/Converters.kt b/app/src/main/java/com/monkey/focus_app/data/db/Converters.kt
+new file mode 100644
+--- /dev/null	(date 1773645702134)
++++ b/app/src/main/java/com/monkey/focus_app/data/db/Converters.kt	(date 1773645702134)
+@@ -0,0 +1,22 @@
++package com.monkey.focus_app.data.db
++
++import androidx.room.TypeConverter
++import com.google.gson.Gson
++import com.google.gson.reflect.TypeToken
++
++class Converters {
++    private val gson = Gson()
++
++    @TypeConverter
++    fun fromJsonToListOfString(value: String?): List<String> {
++        if (value == null) return emptyList()
++        val listType = object : TypeToken<List<String>>() {}.type
++        return gson.fromJson(value, listType)
++    }
++
++    @TypeConverter
++    fun fromListOfStringToJson(list: List<String?>): String {
++        return gson.toJson(list)
++    }
++
++}
+\ No newline at end of file
