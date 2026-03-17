@@ -11,9 +11,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 import com.monkey.focus_app.ui.theme.MONKeyTheme
-import com.monkey.focus_app.ui.activities.Warning
+import com.monkey.focus_app.ui.warning.WarningActivity
+import com.monkey.focus_app.ui.warning.WarningScreen
 
+private val warningScreen = WarningScreen()
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,11 +24,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             MONKeyTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-//                    Greeting(
-//                        name = "Android",
-//                        modifier = Modifier.padding(innerPadding)
-//                    )
-                    Warning( modifier = Modifier.padding(innerPadding))
+                    Greeting(
+                        name = "Android",
+                        modifier = Modifier.padding(innerPadding)
+                    )
                 }
             }
         }
