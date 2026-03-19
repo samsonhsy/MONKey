@@ -13,7 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.monkey.focus_app.ui.NavigationItem
+import com.monkey.focus_app.ui.navigation.NavigationItem
 import com.monkey.focus_app.ui.theme.MONKeyTheme
 
 private val warningScreen = WarningScreen()

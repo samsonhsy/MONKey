@@ -9,43 +9,35 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.monkey.focus_app.ui.theme.MONKeyTheme
-import com.monkey.focus_app.ui.warning.WarningActivity
-import com.monkey.focus_app.ui.warning.WarningScreen
+import com.monkey.focus_app.ui.home.HomeScreen
+import com.monkey.focus_app.ui.navigation.MainNavigation
+import com.monkey.focus_app.ui.navigation.MainRoute
+import com.monkey.focus_app.ui.session.SessionListScreen
 
-private val warningScreen = WarningScreen()
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             MONKeyTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                MainNavigation()
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun MainPreview() {
     MONKeyTheme {
-        Greeting("Android")
+
     }
 }

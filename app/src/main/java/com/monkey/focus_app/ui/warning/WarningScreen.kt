@@ -20,7 +20,6 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.monkey.focus_app.ui.NavigationItem
 
 class WarningScreen() {
     @Composable

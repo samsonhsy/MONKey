@@ -1,4 +1,4 @@
-package com.monkey.focus_app.ui
+package com.monkey.focus_app.ui.navigation
 
 enum class Screen() {
     WARNING,
