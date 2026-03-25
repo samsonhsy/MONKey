@@ -22,6 +22,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.monkey.focus_app.ui.home.HomeScreen
 import com.monkey.focus_app.ui.session.SessionListScreen
+import com.monkey.focus_app.ui.theme.MONKeyTheme
 
 
 sealed class MainRoute(val route: String) {
@@ -51,7 +52,6 @@ enum class TopLevelDestination(
     )
 }
 
-@Preview
 @Composable
 fun MainNavigation(){
     val navController = rememberNavController()
@@ -102,4 +102,19 @@ fun MainNavigation(){
         }
     }
 
+}
+
+@Preview(showBackground = true)
+@Composable
+fun MainNavigationPreviewDark() {
+    MONKeyTheme(darkTheme = true) {
+        MainNavigation()
+    }
+}
+@Preview(showBackground = true)
+@Composable
+fun MainNavigationPreviewLight() {
+    MONKeyTheme {
+        MainNavigation()
+    }
 }
