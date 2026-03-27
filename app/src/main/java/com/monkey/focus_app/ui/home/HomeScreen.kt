@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.monkey.focus_app.ui.navigation.MainRoute
 import com.monkey.focus_app.ui.theme.MONKeyTheme
 
 // --- Dummy Data Models ---
@@ -43,9 +44,8 @@ val dummySessions = listOf(
 @Composable
 fun HomeScreen(navController: NavController) {
     HomeScreenContent(
-        onStartFocusClick = { /* Handle Start Focus */ },
-        onNotificationClick = { /* Handle Notifications */ },
-        onViewAllClick = { /* Navigate to Sessions Tab */ }
+        onStartFocusClick = { navController.navigate(MainRoute.SessionEdit.create("new")) },
+        onViewAllClick = { navController.navigate(MainRoute.SessionList) }
     )
 }
 @Composable
@@ -64,7 +64,7 @@ fun HomeScreenContent(
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
-            TopBarSection(onNotificationClick = onNotificationClick)
+            TopBarSection()
         }
         item {
             StartFocusButton(onClick = onStartFocusClick)
@@ -83,7 +83,7 @@ fun HomeScreenContent(
 }
 
 @Composable
-private fun TopBarSection(onNotificationClick: () -> Unit) {
+private fun TopBarSection() {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -92,7 +92,7 @@ private fun TopBarSection(onNotificationClick: () -> Unit) {
         Column {
             Text(
                 text = "Welcome to MONKey",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
         }
