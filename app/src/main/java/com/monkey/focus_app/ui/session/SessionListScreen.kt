@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.monkey.focus_app.ui.navigation.MainRoute
 import com.monkey.focus_app.ui.theme.MONKeyTheme
 // --- Dummy Data Models ---
 data class UpcomingSession(val id: Int, val title: String, val time: String, val tags: List<String>, val recurrence: String)
@@ -31,9 +32,7 @@ val dummyHistory = listOf(
     HistorySession(1, "Reading Session", "Oct 12, 2023", "15 mins", "RELAX"),
     HistorySession(2, "Study Group", "Oct 11, 2023", "45 mins", "STUDY")
 )
-// ---------------------------------------------------------------------------
-// 1. STATEFUL WRAPPER
-// ---------------------------------------------------------------------------
+
 @Composable
 fun SessionListScreen(navController: NavController) {
     // 0 = Upcoming, 1 = History
@@ -57,8 +56,8 @@ fun SessionListScreen(navController: NavController) {
             // Handle delete logic here
             selectedUpcomingIds = emptySet()
         },
-        onEditClick = { /* Navigate to Edit screen */ },
-        onFabClick = { /* Navigate to Create screen */ }
+        onEditClick = { id -> navController.navigate(MainRoute.SessionEdit.create(id.toString())) },
+        onFabClick = { navController.navigate(MainRoute.SessionEdit.create("new")) }
     )
 }
 
@@ -141,7 +140,7 @@ private fun TopBarSection(showDelete: Boolean, onDeleteClick: () -> Unit) {
     ) {
         Text(
             text = "Sessions",
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onBackground
         )
 
