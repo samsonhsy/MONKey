@@ -13,10 +13,20 @@ import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
     primary = BrandOrange,
+    secondary = BrandOrange,
+    tertiary = BrandOrange,
+    primaryContainer = BrandOrange.copy(alpha = 0.2f),
+    secondaryContainer = DarkCardBackground,
+    tertiaryContainer = DarkCardBackground,
     background = DarkBackground,
     surface = DarkSurface,
     surfaceVariant = DarkCardBackground, // Used for cards
     onPrimary = TextWhite,
+    onSecondary = TextWhite,
+    onTertiary = TextWhite,
+    onPrimaryContainer = TextWhite,
+    onSecondaryContainer = TextWhite,
+    onTertiaryContainer = TextWhite,
     onBackground = TextWhite,
     onSurface = TextWhite,
     onSurfaceVariant = TextWhite // High contrast text on dark cards
@@ -24,10 +34,20 @@ private val DarkColorScheme = darkColorScheme(
 
 private val LightColorScheme = lightColorScheme(
     primary = BrandOrange,
+    secondary = BrandOrange,
+    tertiary = BrandOrange,
+    primaryContainer = BrandOrange.copy(alpha = 0.2f),
+    secondaryContainer = LightCardBackground,
+    tertiaryContainer = LightCardBackground,
     background = LightBackground,
     surface = LightSurface,
     surfaceVariant = LightCardBackground, // Used for cards
     onPrimary = TextWhite, // White text on Orange button
+    onSecondary = TextWhite,
+    onTertiary = TextWhite,
+    onPrimaryContainer = TextBlack,
+    onSecondaryContainer = TextBlack,
+    onTertiaryContainer = TextBlack,
     onBackground = TextBlack,
     onSurface = TextBlack,
     onSurfaceVariant = TextBlack // High contrast text on light cards
