@@ -12,32 +12,51 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = BrandOrange,
+    secondary = BrandOrange,
+    tertiary = BrandOrange,
+    primaryContainer = BrandOrange.copy(alpha = 0.2f),
+    secondaryContainer = DarkCardBackground,
+    tertiaryContainer = DarkCardBackground,
+    background = DarkBackground,
+    surface = DarkSurface,
+    surfaceVariant = DarkCardBackground, // Used for cards
+    onPrimary = TextWhite,
+    onSecondary = TextWhite,
+    onTertiary = TextWhite,
+    onPrimaryContainer = TextWhite,
+    onSecondaryContainer = TextWhite,
+    onTertiaryContainer = TextWhite,
+    onBackground = TextWhite,
+    onSurface = TextWhite,
+    onSurfaceVariant = TextWhite // High contrast text on dark cards
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = BrandOrange,
+    secondary = BrandOrange,
+    tertiary = BrandOrange,
+    primaryContainer = BrandOrange.copy(alpha = 0.2f),
+    secondaryContainer = LightCardBackground,
+    tertiaryContainer = LightCardBackground,
+    background = LightBackground,
+    surface = LightSurface,
+    surfaceVariant = LightCardBackground, // Used for cards
+    onPrimary = TextWhite, // White text on Orange button
+    onSecondary = TextWhite,
+    onTertiary = TextWhite,
+    onPrimaryContainer = TextBlack,
+    onSecondaryContainer = TextBlack,
+    onTertiaryContainer = TextBlack,
+    onBackground = TextBlack,
+    onSurface = TextBlack,
+    onSurfaceVariant = TextBlack // High contrast text on light cards
 )
 
 @Composable
 fun MONKeyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
