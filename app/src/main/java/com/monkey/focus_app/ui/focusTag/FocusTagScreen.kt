@@ -1,4 +1,4 @@
-package com.monkey.focus_app.ui.focustag
+package com.monkey.focus_app.ui.focusTag
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -91,8 +90,8 @@ private fun FocusTagContent(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
             item {
                 Text(
@@ -134,14 +133,14 @@ private fun FocusTagCard(
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .size(width = 8.dp, height = 120.dp)
+                    .size(width = 8.dp, height = 100.dp)
                     .background(item.stripColor),
             )
 
             Row(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -151,7 +150,7 @@ private fun FocusTagCard(
                 ) {
                     Text(
                         text = item.title,
-                        style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
@@ -163,13 +162,22 @@ private fun FocusTagCard(
 
                 Column(
                     horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    IconButton(onClick = onEditClick) {
+                    IconButton(
+                        onClick = onEditClick,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary)
+                            .size(40.dp)
+                    ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = "Edit ${item.title}",
-                            tint = MaterialTheme.colorScheme.primary,
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(20.dp)
+
                         )
                     }
                     Box(

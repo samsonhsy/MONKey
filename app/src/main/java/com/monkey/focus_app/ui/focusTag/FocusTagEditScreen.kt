@@ -1,4 +1,4 @@
-package com.monkey.focus_app.ui.focustag
+package com.monkey.focus_app.ui.focusTag
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,11 +23,9 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField

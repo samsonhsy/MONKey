@@ -1,4 +1,4 @@
-package com.monkey.focus_app.ui.focustag
+package com.monkey.focus_app.ui.focusTag
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
