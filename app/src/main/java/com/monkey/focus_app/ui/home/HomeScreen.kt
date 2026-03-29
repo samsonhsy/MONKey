@@ -22,37 +22,75 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.monkey.focus_app.data.AppRepository
+import com.monkey.focus_app.data.db.DatabaseBuilder
 import com.monkey.focus_app.ui.navigation.MainRoute
+import com.monkey.focus_app.ui.navigation.navigateToTopLevel
 import com.monkey.focus_app.ui.theme.MONKeyTheme
-
-// --- Dummy Data Models ---
-data class SessionItem(val title: String, val timeslot:String, val duration: String, val tag: String)
-val dummySessions = listOf(
-    SessionItem("Deep Work","09:00 - 10:00", "120 min", "WORK"),
-    SessionItem("Math Study","09:00 - 10:00", "60 min", "STUDY"),
-    SessionItem("Reading","09:00 - 10:00", "30 min", "RELAX")
-)
 
 @Composable
 fun HomeScreen(navController: NavController) {
+    val context = LocalContext.current
+
+    val database = remember {
+        DatabaseBuilder.getInstance(context)
+    }
+
+    val repository = remember(database) {
+        AppRepository(
+            focusLogDao = database.focusLogDao(),
+            rewardDao = database.rewardItemDao(),
+            sessionDao = database.sessionDao(),
+            tagDao = database.tagDao(),
+            userStatsDao = database.userStatsDao()
+        )
+    }
+
+    val factory = remember(repository) { HomeViewModelFactory(repository) }
+    val homeViewModel: HomeViewModel = viewModel(factory = factory)
+    val uiState by homeViewModel.uiState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        homeViewModel.effect.collect { effect ->
+            when (effect) {
+                HomeEffect.NavigateToCreateSession -> {
+                    navController.navigate(MainRoute.SessionEdit.create("new"))
+                }
+
+                HomeEffect.NavigateToSessionList -> {
+                    navController.navigateToTopLevel(MainRoute.SessionList.route)
+                }
+            }
+        }
+    }
+
     HomeScreenContent(
-        onStartFocusClick = { navController.navigate(MainRoute.SessionEdit.create("new")) },
-        onViewAllClick = { navController.navigate(MainRoute.SessionList) }
+        sessions = uiState.todaySessions,
+        weeklyFocusText = uiState.weeklyFocusText,
+        onStartFocusClick = homeViewModel::onStartFocusClicked,
+        onViewAllClick = homeViewModel::onViewAllClicked
     )
 }
 @Composable
 fun HomeScreenContent(
+    sessions: List<HomeSessionItemUi>,
+    weeklyFocusText: String,
     modifier: Modifier = Modifier,
     onStartFocusClick: () -> Unit = {},
-    onNotificationClick: () -> Unit = {},
     onViewAllClick: () -> Unit = {}
 ) {
     LazyColumn(
@@ -70,12 +108,12 @@ fun HomeScreenContent(
             StartFocusButton(onClick = onStartFocusClick)
         }
         item {
-            StatsSection()
+            StatsSection(weeklyFocusText = weeklyFocusText)
         }
         item {
             HeaderWithViewAll(title = "Today's Sessions", onViewAllClick = onViewAllClick)
         }
-        items(dummySessions) { session ->
+        items(sessions) { session ->
             SessionCard(session = session)
             Spacer(modifier = Modifier.height(12.dp))
         }
@@ -131,7 +169,7 @@ private fun StartFocusButton(onClick: () -> Unit) {
     }
 }
 @Composable
-private fun StatsSection() {
+private fun StatsSection(weeklyFocusText: String) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -139,13 +177,13 @@ private fun StatsSection() {
         StatCard(
             modifier = Modifier.weight(1f),
             label = "Total Focus This Week",
-            value = "4h 20m",
+            value = weeklyFocusText,
         )
-        StatCard(
-            modifier = Modifier.weight(1f),
-            label = "MONKney Balance",
-            value = "1,250",
-        )
+//        StatCard(
+//            modifier = Modifier.weight(1f),
+//            label = "MONKney Balance",
+//            value = "1,250",
+//        )
     }
 }
 
@@ -198,7 +236,7 @@ private fun HeaderWithViewAll(title: String, onViewAllClick: () -> Unit) {
 }
 
 @Composable
-private fun SessionCard(session: SessionItem) {
+private fun SessionCard(session: HomeSessionItemUi) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -249,7 +287,13 @@ private fun SessionCard(session: SessionItem) {
 @Composable
 fun HomeScreenPreviewDark() {
     MONKeyTheme(darkTheme = true) {
-        HomeScreenContent()
+        HomeScreenContent(
+            sessions = listOf(
+                HomeSessionItemUi(1, "CSCI lecture", "09:00 - 10:00", "120 min", "LESSON"),
+                HomeSessionItemUi(2, "Math Study", "10:30 - 11:30", "60 min", "STUDY")
+            ),
+            weeklyFocusText = "4h 20m"
+        )
     }
 }
 
@@ -257,6 +301,12 @@ fun HomeScreenPreviewDark() {
 @Composable
 fun HomeScreenPreviewLight() {
     MONKeyTheme(darkTheme = false) {
-        HomeScreenContent()
+        HomeScreenContent(
+            sessions = listOf(
+                HomeSessionItemUi(1, "CSCI lecture", "09:00 - 10:00", "120 min", "Lesson"),
+                HomeSessionItemUi(2, "Math Study", "10:30 - 11:30", "60 min", "STUDY")
+            ),
+            weeklyFocusText = "4h 20m"
+        )
     }
 }
