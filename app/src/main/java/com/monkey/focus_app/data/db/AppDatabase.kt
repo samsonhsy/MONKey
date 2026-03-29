@@ -23,7 +23,7 @@ import com.monkey.focus_app.data.db.entity.UserStats
         FocusLog::class,
         RewardItem::class,
         UserStats::class],
-    version = 1
+    version = 2
 )
 @TypeConverters(
     Converters::class
@@ -41,6 +41,7 @@ object DatabaseBuilder{
     fun getInstance(context: Context): AppDatabase {
         return INSTANCE ?: synchronized(this) {
             Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "monkey_database")
+                .fallbackToDestructiveMigration()
                 .build().also { INSTANCE = it }
         }
     }
