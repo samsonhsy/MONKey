@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -25,9 +26,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.monkey.focus_app.ui.home.HomeScreen
-import com.monkey.focus_app.ui.focustag.FocusTagScreen
-import com.monkey.focus_app.ui.focustag.FocusTagEditScreen
-import com.monkey.focus_app.ui.focustag.RestrictAppsScreen
+import com.monkey.focus_app.ui.focusTag.FocusTagScreen
+import com.monkey.focus_app.ui.focusTag.FocusTagEditScreen
+import com.monkey.focus_app.ui.focusTag.RestrictAppsScreen
 import com.monkey.focus_app.ui.session.SessionEditScreen
 import com.monkey.focus_app.ui.session.SessionListScreen
 import com.monkey.focus_app.ui.theme.MONKeyTheme
@@ -94,13 +95,7 @@ fun MainNavigation(){
                             ) },
                             label = { Text(destination.title) },
                             onClick = {
-                                navController.navigate(destination.route){
-                                    popUpTo(navController.graph.findStartDestination().id){
-                                        saveState = true
-                                    }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
+                                navController.navigateToTopLevel(destination.route)
                             }
                         )
                     }
@@ -164,5 +159,15 @@ fun MainNavigationPreviewDark() {
 fun MainNavigationPreviewLight() {
     MONKeyTheme {
         MainNavigation()
+    }
+}
+
+fun NavController.navigateToTopLevel(route: String) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) {
+            saveState = true
+        }
+        launchSingleTop = true
+        restoreState = true
     }
 }
