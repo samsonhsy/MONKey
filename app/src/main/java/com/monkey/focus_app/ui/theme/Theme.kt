@@ -13,7 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
     primary = BrandOrange,
-    secondary = BrandOrange,
+    secondary = SecondaryGreen,
     tertiary = BrandOrange,
     primaryContainer = BrandOrange.copy(alpha = 0.2f),
     secondaryContainer = DarkCardBackground,
@@ -22,7 +22,7 @@ private val DarkColorScheme = darkColorScheme(
     surface = DarkSurface,
     surfaceVariant = DarkCardBackground, // Used for cards
     onPrimary = TextWhite,
-    onSecondary = TextWhite,
+    onSecondary = SecondaryDarkGreen,
     onTertiary = TextWhite,
     onPrimaryContainer = TextWhite,
     onSecondaryContainer = TextWhite,
@@ -34,7 +34,7 @@ private val DarkColorScheme = darkColorScheme(
 
 private val LightColorScheme = lightColorScheme(
     primary = BrandOrange,
-    secondary = BrandOrange,
+    secondary = SecondaryGreen,
     tertiary = BrandOrange,
     primaryContainer = BrandOrange.copy(alpha = 0.2f),
     secondaryContainer = LightCardBackground,
@@ -43,7 +43,7 @@ private val LightColorScheme = lightColorScheme(
     surface = LightSurface,
     surfaceVariant = LightCardBackground, // Used for cards
     onPrimary = TextWhite, // White text on Orange button
-    onSecondary = TextWhite,
+    onSecondary = SecondaryDarkGreen,
     onTertiary = TextWhite,
     onPrimaryContainer = TextBlack,
     onSecondaryContainer = TextBlack,

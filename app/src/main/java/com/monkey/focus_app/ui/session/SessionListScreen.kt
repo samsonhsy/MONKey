@@ -15,49 +15,71 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.monkey.focus_app.data.AppRepository
+import com.monkey.focus_app.data.db.DatabaseBuilder
 import com.monkey.focus_app.ui.navigation.MainRoute
 import com.monkey.focus_app.ui.theme.MONKeyTheme
-// --- Dummy Data Models ---
-data class UpcomingSession(val id: Int, val title: String, val time: String, val tags: List<String>, val recurrence: String)
-data class HistorySession(val id: Int, val title: String, val date: String, val duration: String, val category: String)
-val dummyUpcoming = listOf(
-    UpcomingSession(1, "Morning Meditation", "07:00 - 09:00 ", listOf("#meditation", "#mindful"), "Daily"),
-    UpcomingSession(2, "Deep Work", "09:00 - 10:00", listOf("#work"), "Weekly")
-)
-val dummyHistory = listOf(
-    HistorySession(1, "Reading Session", "Oct 12, 2023", "15 mins", "RELAX"),
-    HistorySession(2, "Study Group", "Oct 11, 2023", "45 mins", "STUDY")
-)
+import androidx.core.graphics.toColorInt
+
 
 @Composable
 fun SessionListScreen(navController: NavController) {
-    // 0 = Upcoming, 1 = History
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
-    // Keep track of which upcoming items are selected for deletion
-    var selectedUpcomingIds by remember { mutableStateOf(setOf<Int>()) }
-    SessionListContent(
-        selectedTabIndex = selectedTabIndex,
-        onTabSelected = { selectedTabIndex = it },
-        upcomingSessions = dummyUpcoming,
-        historySessions = dummyHistory,
-        selectedUpcomingIds = selectedUpcomingIds,
-        onToggleUpcomingSelection = { id ->
-            selectedUpcomingIds = if (selectedUpcomingIds.contains(id)) {
-                selectedUpcomingIds - id
-            } else {
-                selectedUpcomingIds + id
+    val context = LocalContext.current
+    val database = remember {
+        DatabaseBuilder.getInstance(context)
+    }
+    val repository = remember(database) {
+        AppRepository(
+            focusLogDao = database.focusLogDao(),
+            rewardDao = database.rewardItemDao(),
+            sessionDao = database.sessionDao(),
+            tagDao = database.tagDao(),
+            userStatsDao = database.userStatsDao()
+        )
+    }
+    val factory = remember(repository) { SessionListViewModelFactory(repository) }
+    val sessionListViewModel: SessionListViewModel = viewModel(factory = factory)
+    val uiState by sessionListViewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        sessionListViewModel.effect.collect { effect ->
+            when (effect) {
+                SessionListEffect.NavigateToCreate -> {
+                    navController.navigate(MainRoute.SessionEdit.create("new"))
+                }
+
+                is SessionListEffect.NavigateToEdit -> {
+                    navController.navigate(MainRoute.SessionEdit.create(effect.id.toString()))
+                }
+
+                is SessionListEffect.ShowMessage -> {
+                    snackbarHostState.showSnackbar(effect.text)
+                }
             }
-        },
-        onDeleteSelected = {
-            // Handle delete logic here
-            selectedUpcomingIds = emptySet()
-        },
-        onEditClick = { id -> navController.navigate(MainRoute.SessionEdit.create(id.toString())) },
-        onFabClick = { navController.navigate(MainRoute.SessionEdit.create("new")) }
+        }
+    }
+
+    SessionListContent(
+        selectedTabIndex = if (uiState.selectedTab == SessionTab.UPCOMING) 0 else 1 ,
+        onTabSelected = sessionListViewModel :: onTabSelected,
+        upcomingSessions = uiState.upcoming,
+        historySessions = uiState.history,
+        isDeleteMode = uiState.isDeleteMode,
+        pendingDeleteSessionId = uiState.pendingDeleteSessionId,
+        onToggleDeleteMode = sessionListViewModel :: onToggleDeleteMode,
+        onRequestDelete = sessionListViewModel :: onRequestDelete,
+        onDismissDeleteDialog = sessionListViewModel :: onDismissDeleteDialog,
+        onConfirmDelete = sessionListViewModel :: onConfirmDelete,
+        onEditClick = sessionListViewModel :: onEditClicked,
+        onFabClick = sessionListViewModel :: onAddClicked,
+        snackbarHostState = snackbarHostState
     )
 }
 
@@ -66,16 +88,26 @@ fun SessionListScreen(navController: NavController) {
 fun SessionListContent(
     selectedTabIndex: Int,
     onTabSelected: (Int) -> Unit,
-    upcomingSessions: List<UpcomingSession>,
-    historySessions: List<HistorySession>,
-    selectedUpcomingIds: Set<Int>,
-    onToggleUpcomingSelection: (Int) -> Unit,
-    onDeleteSelected: () -> Unit,
+    upcomingSessions: List<UpcomingSessionUi>,
+    historySessions: List<HistorySessionUi>,
+    isDeleteMode: Boolean,
+    pendingDeleteSessionId: Int?,
+    onToggleDeleteMode: () -> Unit,
+    onRequestDelete: (Int) -> Unit,
+    onDismissDeleteDialog: () -> Unit,
+    onConfirmDelete: () -> Unit,
     onEditClick: (Int) -> Unit,
-    onFabClick: () -> Unit
+    onFabClick: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.padding(bottom = 88.dp)
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onFabClick,
@@ -93,8 +125,8 @@ fun SessionListContent(
         ) {
             // --- Header ---
             TopBarSection(
-                showDelete = selectedTabIndex == 0 && selectedUpcomingIds.isNotEmpty(),
-                onDeleteClick = onDeleteSelected
+                isDeleteMode = isDeleteMode,
+                onToggleDeleteMode = onToggleDeleteMode
             )
             // --- Custom Tab Row ---
             SessionTabRow(
@@ -113,9 +145,9 @@ fun SessionListContent(
                     items(upcomingSessions) { session ->
                         UpcomingSessionCard(
                             session = session,
-                            isSelected = selectedUpcomingIds.contains(session.id),
-                            onCheckedChange = { onToggleUpcomingSelection(session.id) },
-                            onEditClick = { onEditClick(session.id) }
+                            isDeleteMode = isDeleteMode,
+                            onEditClick = { onEditClick(session.id) },
+                            onRequestDelete = {onRequestDelete(session.id)}
                         )
                     }
                 } else {
@@ -126,11 +158,28 @@ fun SessionListContent(
             }
         }
     }
+    if (pendingDeleteSessionId != null) {
+        AlertDialog(
+            onDismissRequest = onDismissDeleteDialog,
+            title = { Text("Delete Session") },
+            text = { Text("Confirm to delete this session?") },
+            confirmButton = {
+                TextButton(onClick = onConfirmDelete) {
+                    Text("Delete", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissDeleteDialog) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 
 @Composable
-private fun TopBarSection(showDelete: Boolean, onDeleteClick: () -> Unit) {
+private fun TopBarSection(isDeleteMode: Boolean, onToggleDeleteMode: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -144,9 +193,9 @@ private fun TopBarSection(showDelete: Boolean, onDeleteClick: () -> Unit) {
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        if (showDelete) {
+        if (!isDeleteMode) {
             IconButton(
-                onClick = onDeleteClick,
+                onClick = onToggleDeleteMode,
                 modifier = Modifier.clip(RoundedCornerShape(8.dp))
                 .background(MaterialTheme.colorScheme.errorContainer)
                 .size(40.dp)) {
@@ -154,6 +203,18 @@ private fun TopBarSection(showDelete: Boolean, onDeleteClick: () -> Unit) {
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Delete Selected",
                     tint = MaterialTheme.colorScheme.error
+                )
+            }
+        }else{
+            IconButton(
+                onClick = onToggleDeleteMode,
+                modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.primary)
+                    .size(40.dp)) {
+                Icon(
+                    imageVector = Icons.Default.Edit,
+                    contentDescription = "Delete Selected",
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
@@ -188,10 +249,10 @@ private fun SessionTabRow(selectedTabIndex: Int, onTabSelected: (Int) -> Unit) {
 
 @Composable
 private fun UpcomingSessionCard(
-    session: UpcomingSession,
-    isSelected: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    onEditClick: () -> Unit
+    session: UpcomingSessionUi,
+    isDeleteMode: Boolean,
+    onEditClick: () -> Unit,
+    onRequestDelete: () -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(16.dp),
@@ -204,12 +265,6 @@ private fun UpcomingSessionCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Checkbox
-            Checkbox(
-                checked = isSelected,
-                onCheckedChange = onCheckedChange,
-                colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colorScheme.primary)
-            )
             // Center Content
             Column(
                 modifier = Modifier
@@ -257,43 +312,74 @@ private fun UpcomingSessionCard(
                 Spacer(modifier = Modifier.height(8.dp))
                 // Tags Row
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    session.tags.forEach { tag ->
+                    session.tags.forEachIndexed { index, tag ->
+                        val hex = session.tagColors.getOrNull(index)
+                        val tagColor = parseHexColorOrNull(hex) ?: MaterialTheme.colorScheme.primary
+
                         Surface(
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            color = tagColor.copy(alpha = 0.08f),
                             shape = CircleShape
                         ) {
                             Text(
                                 text = tag,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = tagColor,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }
                 }
             }
-            // Edit Button
-            IconButton(
-                onClick = onEditClick,
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primary)
-                    .size(40.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Edit",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(20.dp)
-                )
+            if(!isDeleteMode){
+                // Edit Button
+                IconButton(
+                    onClick = onEditClick,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primary)
+                        .size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Edit ${session.title}",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }else {
+                // Delete Button
+                IconButton(
+                    onClick = onRequestDelete,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.errorContainer)
+                        .size(40.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete ${session.title}",
+                        tint = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
+
         }
     }
 }
 
+@SuppressLint("UseKtx")
+private fun parseHexColorOrNull(hex: String?): Color? {
+    if (hex.isNullOrBlank()) return null
+    return runCatching {
+        Color(hex.toColorInt())
+    }.getOrNull()
+}
+
 @Composable
-private fun HistorySessionCard(session: HistorySession) {
+private fun HistorySessionCard(session: HistorySessionUi) {
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -335,18 +421,6 @@ private fun HistorySessionCard(session: HistorySession) {
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    // Category Badge
-                    Surface(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.1f),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(
-                            text = session.category,
-                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(
@@ -385,6 +459,42 @@ private fun HistorySessionCard(session: HistorySession) {
     }
 }
 
+
+
+private val previewUpcoming = listOf(
+    UpcomingSessionUi(
+        id = 1,
+        title = "Morning Meditation",
+        time = "07:00 - 09:00",
+        tags = listOf("#meditation", "#mindful"),
+        tagColors = listOf("#5DD39E", "#38C8C2"),
+        recurrence = "Daily"
+    ),
+    UpcomingSessionUi(
+        id = 2,
+        title = "Deep Work",
+        time = "09:00 - 10:00",
+        tags = listOf("#work"),
+        tagColors = listOf("#FE9F4C"),
+        recurrence = "Weekly"
+    )
+)
+private val previewHistory = listOf(
+    HistorySessionUi(
+        id = 10,
+        title = "Reading Session",
+        date = "Oct 12, 2023",
+        duration = "15 mins",
+    ),
+    HistorySessionUi(
+        id = 11,
+        title = "Study Group",
+        date = "Oct 11, 2023",
+        duration = "45 mins",
+    )
+)
+
+
 @Preview(showBackground = true)
 @Composable
 fun SessionListUpcomingPreviewDark() {
@@ -392,51 +502,21 @@ fun SessionListUpcomingPreviewDark() {
         SessionListContent(
             selectedTabIndex = 0,
             onTabSelected = {},
-            upcomingSessions = dummyUpcoming,
-            historySessions = emptyList(),
-            selectedUpcomingIds = setOf(1), // Show one item selected
-            onToggleUpcomingSelection = {},
-            onDeleteSelected = {},
+            upcomingSessions = previewUpcoming,
+            historySessions = previewHistory,
+            isDeleteMode = true,
+            pendingDeleteSessionId = null,
+            onToggleDeleteMode = {},
+            onRequestDelete = {},
+            onDismissDeleteDialog = {},
+            onConfirmDelete = {},
             onEditClick = {},
-            onFabClick = {}
-        )
-    }
-}
-@Preview(showBackground = true)
-@Composable
-fun SessionListHistoryPreviewDark() {
-    MONKeyTheme(darkTheme = true) {
-        SessionListContent(
-            selectedTabIndex = 1,
-            onTabSelected = {},
-            upcomingSessions = emptyList(),
-            historySessions = dummyHistory,
-            selectedUpcomingIds = emptySet(),
-            onToggleUpcomingSelection = {},
-            onDeleteSelected = {},
-            onEditClick = {},
-            onFabClick = {}
+            onFabClick = {},
+            snackbarHostState = SnackbarHostState()
         )
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun SessionListUpcomingPreviewLight() {
-    MONKeyTheme(darkTheme = false) {
-        SessionListContent(
-            selectedTabIndex = 0,
-            onTabSelected = {},
-            upcomingSessions = dummyUpcoming,
-            historySessions = emptyList(),
-            selectedUpcomingIds = setOf(1), // Show one item selected
-            onToggleUpcomingSelection = {},
-            onDeleteSelected = {},
-            onEditClick = {},
-            onFabClick = {}
-        )
-    }
-}
 @Preview(showBackground = true)
 @Composable
 fun SessionListHistoryPreviewLight() {
@@ -444,13 +524,17 @@ fun SessionListHistoryPreviewLight() {
         SessionListContent(
             selectedTabIndex = 1,
             onTabSelected = {},
-            upcomingSessions = emptyList(),
-            historySessions = dummyHistory,
-            selectedUpcomingIds = emptySet(),
-            onToggleUpcomingSelection = {},
-            onDeleteSelected = {},
+            upcomingSessions = previewUpcoming,
+            historySessions = previewHistory,
+            isDeleteMode = false,
+            pendingDeleteSessionId = null,
+            onToggleDeleteMode = {},
+            onRequestDelete = {},
+            onDismissDeleteDialog = {},
+            onConfirmDelete = {},
             onEditClick = {},
-            onFabClick = {}
+            onFabClick = {},
+            snackbarHostState = SnackbarHostState()
         )
     }
 }

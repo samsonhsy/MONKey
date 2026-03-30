@@ -23,7 +23,7 @@ import com.monkey.focus_app.data.db.entity.UserStats
         FocusLog::class,
         RewardItem::class,
         UserStats::class],
-    version = 1
+    version = 3
 )
 @TypeConverters(
     Converters::class
