@@ -52,6 +52,7 @@ import com.monkey.focus_app.data.db.DatabaseBuilder
 import com.monkey.focus_app.ui.navigation.MainRoute
 import com.monkey.focus_app.ui.theme.MONKeyTheme
 import kotlinx.coroutines.launch
+import androidx.core.graphics.toColorInt
 
 @Composable
 fun FocusTagScreen(navController: NavController) {
@@ -218,7 +219,7 @@ private fun FocusTagCard(
     onRequestDelete: () -> Unit,
 ) {
     val stripColor = try {
-        Color(android.graphics.Color.parseColor(item.colorHex))
+        Color(item.colorHex.toColorInt())
     } catch (_: IllegalArgumentException) {
         MaterialTheme.colorScheme.primary
     }

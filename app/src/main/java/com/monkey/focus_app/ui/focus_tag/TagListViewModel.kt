@@ -107,10 +107,9 @@ class TagListViewModel(
 
     private fun Tag.toUi(): TagListItemUi {
         val cleanName = tagName.trim()
-        val subtitle = if (cleanName.isEmpty()) {
-            "Tag"
-        } else {
-            "$cleanName apps"
+        val cleanSubtitle = tagSubtitle.trim()
+        val subtitle = cleanSubtitle.ifEmpty {
+            "No subtitle"
         }
 
         return TagListItemUi(
