@@ -16,8 +16,6 @@ import androidx.navigation.compose.rememberNavController
 import com.monkey.focus_app.ui.navigation.NavigationItem
 import com.monkey.focus_app.ui.theme.MONKeyTheme
 
-private val warningScreen = WarningScreen()
-
 class WarningActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,21 +23,27 @@ class WarningActivity : ComponentActivity() {
         setContent {
             MONKeyTheme {
                 val navController = rememberNavController()
-                val modeName = NavigationItem.Novice.route
+                val modeName = NavigationItem.Bhikkhu.route
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavHost(
                         navController = navController,
                         startDestination = NavigationItem.Warning.route
                     ) {
                         composable(NavigationItem.Warning.route) {
-                            warningScreen.Warning(
+                            Warning(
                                 modifier = Modifier.padding(innerPadding),
                                 navController = navController,
                                 modeName = modeName
                             )
                         }
                         composable(NavigationItem.Novice.route) {
-                            warningScreen.Novice(
+                            Novice(
+                                modifier = Modifier.padding(innerPadding),
+                                navController = navController
+                            )
+                        }
+                        composable(NavigationItem.Bhikkhu.route) {
+                            Bhikkhu(
                                 modifier = Modifier.padding(innerPadding),
                                 navController = navController
                             )
