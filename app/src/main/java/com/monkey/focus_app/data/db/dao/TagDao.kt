@@ -18,7 +18,7 @@ interface TagDao {
     suspend fun getTagsById(id: Int): Tag
 
     @Insert
-    suspend fun insertAll(vararg tag: Tag)
+    suspend fun insertAll(vararg tag: Tag): LongArray
 
     @Update
     suspend fun updateAll(vararg tag: Tag)

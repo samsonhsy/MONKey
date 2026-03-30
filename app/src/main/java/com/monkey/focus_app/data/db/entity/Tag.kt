@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey
 data class Tag(
     @PrimaryKey(autoGenerate = true) @ColumnInfo(name = "tag_id") val tagID: Int,
     @ColumnInfo(name="tag_name") val tagName: String,
+    @ColumnInfo(name="tag_subtitle") val tagSubtitle: String,
     @ColumnInfo(name="color_hex") val colorHex: String, // e.g. #FFFF00
     @ColumnInfo(name = "package_names") val packageNames: List<String>,
 )
