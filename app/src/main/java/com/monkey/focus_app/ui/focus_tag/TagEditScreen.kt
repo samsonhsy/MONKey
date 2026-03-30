@@ -169,7 +169,7 @@ private fun FocusTagEditContent(
         )
 
         OutlinedTextField(
-            value = uiState.description,
+            value = uiState.subtitle,
             onValueChange = onDescriptionChanged,
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Description") },
@@ -305,7 +305,7 @@ private fun FocusTagEditPreviewDark() {
                 isCreateMode = false,
                 tagId = 1,
                 name = "Work",
-                description = "Work related",
+                subtitle = "Work related",
                 selectedColorHex = "#FE9F4C",
                 restrictedAppCount = 4,
             ),

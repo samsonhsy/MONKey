@@ -27,7 +27,7 @@ data class TagEditUiState(
     val isCreateMode: Boolean = true,
     val tagId: Int? = null,
     val name: String = "",
-    val description: String = "",
+    val subtitle: String = "",
     val selectedColorHex: String = defaultTagPalette.first(),
     val availableColors: List<String> = defaultTagPalette,
     val restrictedAppCount: Int = 0,
@@ -53,6 +53,7 @@ class TagEditViewModel(
     val effect: SharedFlow<TagEditEffect> = _effect.asSharedFlow()
 
     private val isCreateMode = tagIdArg == "new"
+    private var isObservingRestrictedAppCount = false
 
     init {
         _uiState.value = _uiState.value.copy(isCreateMode = isCreateMode)
@@ -60,6 +61,10 @@ class TagEditViewModel(
             _uiState.value = _uiState.value.copy(isLoading = false)
         } else {
             loadExistingTag()
+            val existingTagId = tagIdArg.toIntOrNull()
+            if (existingTagId != null) {
+                observeRestrictedAppCountById(existingTagId)
+            }
         }
     }
 
@@ -80,10 +85,25 @@ class TagEditViewModel(
                 isCreateMode = false,
                 tagId = tag.tagID,
                 name = tag.tagName,
+                subtitle = tag.tagSubtitle,
                 selectedColorHex = tag.colorHex,
                 restrictedAppCount = tag.packageNames.size,
                 errorMessage = null
             )
+        }
+    }
+
+    private fun observeRestrictedAppCountById(id: Int) {
+        if (isObservingRestrictedAppCount) return
+        isObservingRestrictedAppCount = true
+
+        viewModelScope.launch {
+            repository.getAllTag().collect { tags ->
+                val latestTag = tags.firstOrNull { it.tagID == id } ?: return@collect
+                _uiState.value = _uiState.value.copy(
+                    restrictedAppCount = latestTag.packageNames.size
+                )
+            }
         }
     }
 
@@ -92,7 +112,7 @@ class TagEditViewModel(
     }
 
     fun onDescriptionChanged(value: String) {
-        _uiState.value = _uiState.value.copy(description = value)
+        _uiState.value = _uiState.value.copy(subtitle = value)
     }
 
     fun onColorSelected(hex: String) {
@@ -101,8 +121,49 @@ class TagEditViewModel(
 
     fun onConfigureAppsClicked() {
         viewModelScope.launch {
-            val target = _uiState.value.tagId?.toString() ?: "new"
-            _effect.emit(TagEditEffect.NavigateToRestrictApps(target))
+            val currentState = _uiState.value
+            val existingTagId = currentState.tagId
+
+            if (existingTagId != null) {
+                // Old tag
+                _effect.emit(TagEditEffect.NavigateToRestrictApps(existingTagId.toString()))
+                return@launch
+            }
+
+            if (currentState.name.isBlank()) {
+                // Tag name is empty
+                _effect.emit(TagEditEffect.ShowMessage("Tag name is required before configuring apps"))
+                return@launch
+            }
+
+            try {
+                val createdTag = Tag(
+                    tagID = 0,
+                    tagName = currentState.name.trim(),
+                    tagSubtitle = currentState.subtitle.trim(),
+                    colorHex = currentState.selectedColorHex,
+                    packageNames = emptyList()
+                )
+                val createdId = repository.insertAllTag(createdTag)
+                    .firstOrNull()
+                    ?.toInt()
+                    ?.takeIf { it > 0 }
+
+                if (createdId == null) {
+                    _effect.emit(TagEditEffect.ShowMessage("Failed to create tag"))
+                    return@launch
+                }
+
+                _uiState.value = _uiState.value.copy(
+                    isCreateMode = false,
+                    tagId = createdId,
+                )
+                observeRestrictedAppCountById(createdId)
+                _effect.emit(TagEditEffect.NavigateToRestrictApps(createdId.toString()))
+            } catch (throwable: Throwable) {
+                _effect.emit(TagEditEffect.ShowMessage(throwable.message ?: "Failed to create tag"))
+            }
+
         }
     }
 
@@ -125,6 +186,7 @@ class TagEditViewModel(
                 val tag = Tag(
                     tagID = state.tagId ?: 0,
                     tagName = state.name.trim(),
+                    tagSubtitle = state.subtitle.trim(),
                     colorHex = state.selectedColorHex,
                     packageNames = existingPackages
                 )
