@@ -25,6 +25,7 @@ data class UpcomingSessionUi(
     val title: String,
     val time: String,
     val tags: List<String>,
+    val tagColors: List<String>,
     val recurrence: String
 )
 data class HistorySessionUi(
@@ -160,6 +161,7 @@ class SessionListViewModel (
             title = sessionName,
             time = "$start - $end",
             tags = tagLabels,
+            tagColors = tagIds.mapNotNull { id -> tagMap[id]?.colorHex },
             recurrence = recurrence
         )
     }

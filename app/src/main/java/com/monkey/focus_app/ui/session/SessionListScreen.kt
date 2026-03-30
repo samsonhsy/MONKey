@@ -25,6 +25,7 @@ import com.monkey.focus_app.data.AppRepository
 import com.monkey.focus_app.data.db.DatabaseBuilder
 import com.monkey.focus_app.ui.navigation.MainRoute
 import com.monkey.focus_app.ui.theme.MONKeyTheme
+import androidx.core.graphics.toColorInt
 
 
 @Composable
@@ -45,6 +46,7 @@ fun SessionListScreen(navController: NavController) {
     val factory = remember(repository) { SessionListViewModelFactory(repository) }
     val sessionListViewModel: SessionListViewModel = viewModel(factory = factory)
     val uiState by sessionListViewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
         sessionListViewModel.effect.collect { effect ->
@@ -58,6 +60,7 @@ fun SessionListScreen(navController: NavController) {
                 }
 
                 is SessionListEffect.ShowMessage -> {
+                    snackbarHostState.showSnackbar(effect.text)
                 }
             }
         }
@@ -75,7 +78,8 @@ fun SessionListScreen(navController: NavController) {
         onDismissDeleteDialog = sessionListViewModel :: onDismissDeleteDialog,
         onConfirmDelete = sessionListViewModel :: onConfirmDelete,
         onEditClick = sessionListViewModel :: onEditClicked,
-        onFabClick = sessionListViewModel :: onAddClicked
+        onFabClick = sessionListViewModel :: onAddClicked,
+        snackbarHostState = snackbarHostState
     )
 }
 
@@ -93,10 +97,17 @@ fun SessionListContent(
     onDismissDeleteDialog: () -> Unit,
     onConfirmDelete: () -> Unit,
     onEditClick: (Int) -> Unit,
-    onFabClick: () -> Unit
+    onFabClick: () -> Unit,
+    snackbarHostState: SnackbarHostState
 ) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.padding(bottom = 88.dp)
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onFabClick,
@@ -198,12 +209,12 @@ private fun TopBarSection(isDeleteMode: Boolean, onToggleDeleteMode: () -> Unit)
             IconButton(
                 onClick = onToggleDeleteMode,
                 modifier = Modifier.clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.onSecondary)
+                    .background(MaterialTheme.colorScheme.primary)
                     .size(40.dp)) {
                 Icon(
                     imageVector = Icons.Default.Edit,
                     contentDescription = "Delete Selected",
-                    tint = MaterialTheme.colorScheme.secondary
+                    tint = MaterialTheme.colorScheme.onPrimary
                 )
             }
         }
@@ -301,15 +312,18 @@ private fun UpcomingSessionCard(
                 Spacer(modifier = Modifier.height(8.dp))
                 // Tags Row
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    session.tags.forEach { tag ->
+                    session.tags.forEachIndexed { index, tag ->
+                        val hex = session.tagColors.getOrNull(index)
+                        val tagColor = parseHexColorOrNull(hex) ?: MaterialTheme.colorScheme.primary
+
                         Surface(
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            color = tagColor.copy(alpha = 0.08f),
                             shape = CircleShape
                         ) {
                             Text(
                                 text = tag,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = tagColor,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
@@ -323,13 +337,13 @@ private fun UpcomingSessionCard(
                     modifier = Modifier
                         .padding(start = 8.dp)
                         .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.onSecondary)
+                        .background(MaterialTheme.colorScheme.primary)
                         .size(40.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = "Edit ${session.title}",
-                        tint = MaterialTheme.colorScheme.secondary,
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -354,6 +368,14 @@ private fun UpcomingSessionCard(
 
         }
     }
+}
+
+@SuppressLint("UseKtx")
+private fun parseHexColorOrNull(hex: String?): Color? {
+    if (hex.isNullOrBlank()) return null
+    return runCatching {
+        Color(hex.toColorInt())
+    }.getOrNull()
 }
 
 @Composable
@@ -445,6 +467,7 @@ private val previewUpcoming = listOf(
         title = "Morning Meditation",
         time = "07:00 - 09:00",
         tags = listOf("#meditation", "#mindful"),
+        tagColors = listOf("#5DD39E", "#38C8C2"),
         recurrence = "Daily"
     ),
     UpcomingSessionUi(
@@ -452,6 +475,7 @@ private val previewUpcoming = listOf(
         title = "Deep Work",
         time = "09:00 - 10:00",
         tags = listOf("#work"),
+        tagColors = listOf("#FE9F4C"),
         recurrence = "Weekly"
     )
 )
@@ -487,7 +511,8 @@ fun SessionListUpcomingPreviewDark() {
             onDismissDeleteDialog = {},
             onConfirmDelete = {},
             onEditClick = {},
-            onFabClick = {}
+            onFabClick = {},
+            snackbarHostState = SnackbarHostState()
         )
     }
 }
@@ -508,7 +533,8 @@ fun SessionListHistoryPreviewLight() {
             onDismissDeleteDialog = {},
             onConfirmDelete = {},
             onEditClick = {},
-            onFabClick = {}
+            onFabClick = {},
+            snackbarHostState = SnackbarHostState()
         )
     }
 }
