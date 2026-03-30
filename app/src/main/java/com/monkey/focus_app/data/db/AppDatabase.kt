@@ -41,7 +41,6 @@ object DatabaseBuilder{
     fun getInstance(context: Context): AppDatabase {
         return INSTANCE ?: synchronized(this) {
             Room.databaseBuilder(context.applicationContext, AppDatabase::class.java, "monkey_database")
-                .fallbackToDestructiveMigration()
                 .build().also { INSTANCE = it }
         }
     }
