@@ -1,6 +1,9 @@
 package com.monkey.focus_app.ui.focus_tag
 
-import androidx.compose.ui.graphics.Color
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
+import android.os.Build
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.monkey.focus_app.data.AppRepository
@@ -15,8 +18,7 @@ import kotlinx.coroutines.launch
 data class RestrictAppUi(
     val packageName: String,
     val appName: String,
-    val category: String,
-    val logoColor: Color,
+    val icon: Drawable?,
 )
 
 data class RestrictAppsUiState(
@@ -32,16 +34,6 @@ sealed interface RestrictAppsEffect {
     data class ShowMessage(val text: String) : RestrictAppsEffect
 }
 
-private val demoApps = listOf(
-    RestrictAppUi("com.instagram.android", "Instagram", "Social", Color(0xFFF2746B)),
-    RestrictAppUi("com.zhiliaoapp.musically", "TikTok", "Entertainment", Color(0xFF38C8C2)),
-    RestrictAppUi("com.reddit.frontpage", "Reddit", "Social", Color(0xFFFE9F4C)),
-    RestrictAppUi("com.google.android.youtube", "YouTube", "Video", Color(0xFFE35D6A)),
-    RestrictAppUi("com.discord", "Discord", "Communication", Color(0xFF9FA8DA)),
-    RestrictAppUi("com.facebook.katana", "Facebook", "Social", Color(0xFF4FB2F8)),
-    RestrictAppUi("com.twitter.android", "X", "Social", Color(0xFF90A4AE)),
-)
-
 class RestrictAppsViewModel(
     private val repository: AppRepository,
     private val tagIdArg: String,
@@ -54,12 +46,13 @@ class RestrictAppsViewModel(
     val effect: SharedFlow<RestrictAppsEffect> = _effect.asSharedFlow()
 
     private val tagId: Int? = tagIdArg.toIntOrNull()
+    private var allApps: List<RestrictAppUi> = emptyList()
 
     init {
-        loadInitialState()
+        loadInitialSelection()
     }
 
-    private fun loadInitialState() {
+    private fun loadInitialSelection() {
         val id = tagId
         if (id == null) {
             _uiState.value = _uiState.value.copy(
@@ -73,16 +66,44 @@ class RestrictAppsViewModel(
             try {
                 val tag = repository.getTagsById(id)
                 _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    apps = filterApps(query = ""),
                     selectedPackages = tag.packageNames.toSet(),
                     errorMessage = null
                 )
             } catch (throwable: Throwable) {
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    errorMessage = throwable.message ?: "Failed to load apps"
+                    errorMessage = throwable.message ?: "Failed to load selected apps"
                 )
+            }
+        }
+    }
+
+    fun loadInstalledApps(packageManager: PackageManager) {
+        viewModelScope.launch {
+            try {
+                val apps = getInstalledApplicationsCompat(packageManager)
+                    .map { appInfo ->
+                        RestrictAppUi(
+                            packageName = appInfo.packageName,
+                            appName = packageManager.getApplicationLabel(appInfo).toString(),
+                            icon = appInfo.loadIcon(packageManager)
+                        )
+                    }
+                    .sortedBy { it.appName.lowercase() }
+
+                allApps = apps
+
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    apps = filterApps(_uiState.value.query),
+                    errorMessage = null
+                )
+            } catch (throwable: Throwable) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = throwable.message ?: "Failed to load installed apps"
+                )
+                _effect.emit(RestrictAppsEffect.ShowMessage("Failed to load apps"))
             }
         }
     }
@@ -122,10 +143,19 @@ class RestrictAppsViewModel(
     }
 
     private fun filterApps(query: String): List<RestrictAppUi> {
-        return demoApps.filter {
+        if (query.isBlank()) return allApps
+        return allApps.filter {
             it.appName.contains(query, ignoreCase = true) ||
-                it.category.contains(query, ignoreCase = true) ||
                 it.packageName.contains(query, ignoreCase = true)
+        }
+    }
+
+    private fun getInstalledApplicationsCompat(pm: PackageManager): List<ApplicationInfo> {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pm.getInstalledApplications(PackageManager.ApplicationInfoFlags.of(0))
+        } else {
+            @Suppress("DEPRECATION")
+            pm.getInstalledApplications(0)
         }
     }
 }

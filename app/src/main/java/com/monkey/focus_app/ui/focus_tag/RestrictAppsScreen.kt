@@ -2,6 +2,8 @@ package com.monkey.focus_app.ui.focus_tag
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,9 +40,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.monkey.focus_app.data.AppRepository
@@ -68,9 +73,14 @@ fun RestrictAppsScreen(
     val factory = remember(repository, tagId) { RestrictAppsViewModelFactory(repository, tagId) }
     val restrictAppsViewModel: RestrictAppsViewModel = viewModel(factory = factory)
     val uiState by restrictAppsViewModel.uiState.collectAsState()
+    val packageManager = context.packageManager
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        restrictAppsViewModel.loadInstalledApps(packageManager)
+    }
 
     LaunchedEffect(Unit) {
         restrictAppsViewModel.effect.collect { effect ->
@@ -129,7 +139,7 @@ private fun RestrictAppsContent(
                 ) {
                     Icon(Icons.Default.Check, contentDescription = "Confirm selection")
                     Text(
-                        text = "Confirm Selection",
+                        text = "Confirm Selection (${selectedPackages.size})",
                         modifier = Modifier.padding(start = 8.dp),
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
                     )
@@ -200,14 +210,30 @@ private fun RestrictAppsContent(
                             Box(
                                 modifier = Modifier
                                     .size(40.dp)
-                                    .background(app.logoColor, CircleShape),
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surface)
+                                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.35f), CircleShape),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                Text(
-                                    text = app.appName.take(1),
-                                    color = MaterialTheme.colorScheme.onPrimary,
-                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                )
+                                val appIconBitmap = remember(app.packageName, app.icon) {
+                                    app.icon?.toBitmap(width = 96, height = 96)?.asImageBitmap()
+                                }
+
+                                if (appIconBitmap != null) {
+                                    Image(
+                                        bitmap = appIconBitmap,
+                                        contentDescription = app.appName,
+                                        modifier = Modifier
+                                            .size(30.dp)
+                                            .clip(CircleShape)
+                                    )
+                                } else {
+                                    Text(
+                                        text = app.appName.take(1).uppercase(),
+                                        color = MaterialTheme.colorScheme.primary,
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                    )
+                                }
                             }
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                 Text(
@@ -216,7 +242,7 @@ private fun RestrictAppsContent(
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                                 Text(
-                                    text = app.category,
+                                    text = app.packageName,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f),
                                 )
@@ -240,8 +266,8 @@ private fun RestrictAppsPreviewDark() {
         RestrictAppsContent(
             query = "",
             apps = listOf(
-                RestrictAppUi("com.instagram.android", "Instagram", "Social", androidx.compose.ui.graphics.Color(0xFFF2746B)),
-                RestrictAppUi("com.zhiliaoapp.musically", "TikTok", "Entertainment", androidx.compose.ui.graphics.Color(0xFF38C8C2)),
+                RestrictAppUi("com.instagram.android", "Instagram", null),
+                RestrictAppUi("com.tiktok.video", "TikTok", null),
             ),
             selectedPackages = setOf("com.instagram.android"),
             snackbarHostState = SnackbarHostState(),
@@ -260,8 +286,8 @@ private fun RestrictAppsPreviewLight() {
         RestrictAppsContent(
             query = "",
             apps = listOf(
-                RestrictAppUi("com.instagram.android", "Instagram", "Social", androidx.compose.ui.graphics.Color(0xFFF2746B)),
-                RestrictAppUi("com.zhiliaoapp.musically", "TikTok", "Entertainment", androidx.compose.ui.graphics.Color(0xFF38C8C2)),
+                RestrictAppUi("com.instagram.android", "Instagram", null),
+                RestrictAppUi("com.zhiliaoapp.musically", "TikTok", null),
             ),
             selectedPackages = setOf("com.instagram.android"),
             snackbarHostState = SnackbarHostState(),
