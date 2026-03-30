@@ -28,9 +28,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.monkey.focus_app.ui.home.HomeScreen
-import com.monkey.focus_app.ui.focusTag.FocusTagScreen
-import com.monkey.focus_app.ui.focusTag.FocusTagEditScreen
-import com.monkey.focus_app.ui.focusTag.RestrictAppsScreen
+import com.monkey.focus_app.ui.focus_tag.FocusTagScreen
+import com.monkey.focus_app.ui.focus_tag.FocusTagEditScreen
+import com.monkey.focus_app.ui.focus_tag.RestrictAppsScreen
 import com.monkey.focus_app.ui.session.SessionEditScreen
 import com.monkey.focus_app.ui.session.SessionListScreen
 import com.monkey.focus_app.ui.theme.MONKeyTheme

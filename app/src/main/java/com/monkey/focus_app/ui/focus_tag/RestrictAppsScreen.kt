@@ -1,4 +1,4 @@
-package com.monkey.focus_app.ui.focusTag
+package com.monkey.focus_app.ui.focus_tag
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
@@ -27,37 +27,26 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.monkey.focus_app.data.AppRepository
+import com.monkey.focus_app.data.db.DatabaseBuilder
 import com.monkey.focus_app.ui.theme.MONKeyTheme
-
-private data class RestrictAppUi(
-    val packageName: String,
-    val appName: String,
-    val category: String,
-    val logoColor: Color,
-)
-
-private val demoApps = listOf(
-    RestrictAppUi("com.instagram.android", "Instagram", "Social", Color(0xFFF2746B)),
-    RestrictAppUi("com.zhiliaoapp.musically", "TikTok", "Entertainment", Color(0xFF38C8C2)),
-    RestrictAppUi("com.reddit.frontpage", "Reddit", "Social", Color(0xFFFE9F4C)),
-    RestrictAppUi("com.google.android.youtube", "YouTube", "Video", Color(0xFFE35D6A)),
-    RestrictAppUi("com.discord", "Discord", "Communication", Color(0xFF9FA8DA)),
-    RestrictAppUi("com.facebook.katana", "Facebook", "Social", Color(0xFF4FB2F8)),
-    RestrictAppUi("com.twitter.android", "X", "Social", Color(0xFF90A4AE)),
-)
+import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -65,18 +54,62 @@ fun RestrictAppsScreen(
     navController: NavController,
     tagId: String,
 ) {
-    var query by remember { mutableStateOf("") }
-    var selectedPackages by remember { mutableStateOf(setOf<String>()) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val database = remember { DatabaseBuilder.getInstance(context) }
+    val repository = remember(database) {
+        AppRepository(
+            focusLogDao = database.focusLogDao(),
+            rewardDao = database.rewardItemDao(),
+            sessionDao = database.sessionDao(),
+            tagDao = database.tagDao(),
+            userStatsDao = database.userStatsDao()
+        )
+    }
+    val factory = remember(repository, tagId) { RestrictAppsViewModelFactory(repository, tagId) }
+    val restrictAppsViewModel: RestrictAppsViewModel = viewModel(factory = factory)
+    val uiState by restrictAppsViewModel.uiState.collectAsState()
 
-    val filteredApps = remember(query) {
-        demoApps.filter {
-            it.appName.contains(query, ignoreCase = true) ||
-                it.category.contains(query, ignoreCase = true) ||
-                it.packageName.contains(query, ignoreCase = true)
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        restrictAppsViewModel.effect.collect { effect ->
+            when (effect) {
+                RestrictAppsEffect.SaveSuccess -> navController.popBackStack()
+                is RestrictAppsEffect.ShowMessage -> {
+                    scope.launch { snackbarHostState.showSnackbar(effect.text) }
+                }
+            }
         }
     }
+
+    RestrictAppsContent(
+        query = uiState.query,
+        apps = uiState.apps,
+        selectedPackages = uiState.selectedPackages,
+        snackbarHostState = snackbarHostState,
+        onBackClick = { navController.popBackStack() },
+        onQueryChanged = restrictAppsViewModel::onQueryChanged,
+        onTogglePackage = restrictAppsViewModel::onTogglePackage,
+        onConfirmSelection = restrictAppsViewModel::onConfirmSelection,
+    )
+}
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@Composable
+private fun RestrictAppsContent(
+    query: String,
+    apps: List<RestrictAppUi>,
+    selectedPackages: Set<String>,
+    snackbarHostState: SnackbarHostState,
+    onBackClick: () -> Unit,
+    onQueryChanged: (String) -> Unit,
+    onTogglePackage: (String, Boolean) -> Unit,
+    onConfirmSelection: () -> Unit,
+) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         bottomBar = {
             Box(
                 modifier = Modifier
@@ -85,7 +118,7 @@ fun RestrictAppsScreen(
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
                 Button(
-                    onClick = { navController.popBackStack() },
+                    onClick = onConfirmSelection,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -117,10 +150,12 @@ fun RestrictAppsScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack,
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onSurface)
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
                 }
                 Text(
                     text = "Restrict Apps",
@@ -131,7 +166,7 @@ fun RestrictAppsScreen(
 
             OutlinedTextField(
                 value = query,
-                onValueChange = { query = it },
+                onValueChange = onQueryChanged,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text("Search apps") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
@@ -144,7 +179,7 @@ fun RestrictAppsScreen(
                 contentPadding = PaddingValues(bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                items(filteredApps, key = { it.packageName }) { app ->
+                items(apps, key = { it.packageName }) { app ->
                     val isSelected = selectedPackages.contains(app.packageName)
                     Row(
                         modifier = Modifier
@@ -189,13 +224,7 @@ fun RestrictAppsScreen(
                         }
                         Checkbox(
                             checked = isSelected,
-                            onCheckedChange = { checked ->
-                                selectedPackages = if (checked) {
-                                    selectedPackages + app.packageName
-                                } else {
-                                    selectedPackages - app.packageName
-                                }
-                            }
+                            onCheckedChange = { checked -> onTogglePackage(app.packageName, checked) }
                         )
                     }
                 }
@@ -208,8 +237,19 @@ fun RestrictAppsScreen(
 @Composable
 private fun RestrictAppsPreviewDark() {
     MONKeyTheme(darkTheme = true) {
-        val nav = androidx.navigation.compose.rememberNavController()
-        RestrictAppsScreen(navController = nav, tagId = "1")
+        RestrictAppsContent(
+            query = "",
+            apps = listOf(
+                RestrictAppUi("com.instagram.android", "Instagram", "Social", androidx.compose.ui.graphics.Color(0xFFF2746B)),
+                RestrictAppUi("com.zhiliaoapp.musically", "TikTok", "Entertainment", androidx.compose.ui.graphics.Color(0xFF38C8C2)),
+            ),
+            selectedPackages = setOf("com.instagram.android"),
+            snackbarHostState = SnackbarHostState(),
+            onBackClick = {},
+            onQueryChanged = {},
+            onTogglePackage = { _, _ -> },
+            onConfirmSelection = {},
+        )
     }
 }
 
@@ -217,7 +257,18 @@ private fun RestrictAppsPreviewDark() {
 @Composable
 private fun RestrictAppsPreviewLight() {
     MONKeyTheme(darkTheme = false) {
-        val nav = androidx.navigation.compose.rememberNavController()
-        RestrictAppsScreen(navController = nav, tagId = "1")
+        RestrictAppsContent(
+            query = "",
+            apps = listOf(
+                RestrictAppUi("com.instagram.android", "Instagram", "Social", androidx.compose.ui.graphics.Color(0xFFF2746B)),
+                RestrictAppUi("com.zhiliaoapp.musically", "TikTok", "Entertainment", androidx.compose.ui.graphics.Color(0xFF38C8C2)),
+            ),
+            selectedPackages = setOf("com.instagram.android"),
+            snackbarHostState = SnackbarHostState(),
+            onBackClick = {},
+            onQueryChanged = {},
+            onTogglePackage = { _, _ -> },
+            onConfirmSelection = {},
+        )
     }
 }

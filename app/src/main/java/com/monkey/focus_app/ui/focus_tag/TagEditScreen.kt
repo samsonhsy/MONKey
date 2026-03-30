@@ -1,4 +1,4 @@
-package com.monkey.focus_app.ui.focusTag
+package com.monkey.focus_app.ui.focus_tag
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Widgets
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -29,13 +28,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,15 +44,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.monkey.focus_app.data.AppRepository
+import com.monkey.focus_app.data.db.DatabaseBuilder
 import com.monkey.focus_app.ui.navigation.MainRoute
 import com.monkey.focus_app.ui.theme.MONKeyTheme
-
-private val mindfulShades = listOf(
-    Color(0xFFFE9F4C), Color(0xFFE35D6A), Color(0xFFFFEB3B),
-    Color(0xFF38C8C2), Color(0xFF5DD39E), Color(0xFFBA68C8),
-    Color(0xFF9FA8DA),
-)
+import kotlinx.coroutines.launch
+import androidx.core.graphics.toColorInt
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -59,12 +59,64 @@ fun FocusTagEditScreen(
     navController: NavController,
     tagId: String,
 ) {
-    val isCreate = tagId == "new"
-    var tagName by remember { mutableStateOf(if (isCreate) "" else "Untitled") }
-    var description by remember { mutableStateOf(if (isCreate) "" else "No description") }
-    var selectedColor by remember { mutableStateOf(mindfulShades.first()) }
-    val restrictedCount = if (isCreate) 0 else 7
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val database = remember { DatabaseBuilder.getInstance(context) }
+    val repository = remember(database) {
+        AppRepository(
+            focusLogDao = database.focusLogDao(),
+            rewardDao = database.rewardItemDao(),
+            sessionDao = database.sessionDao(),
+            tagDao = database.tagDao(),
+            userStatsDao = database.userStatsDao()
+        )
+    }
+    val factory = remember(repository, tagId) { TagEditViewModelFactory(repository, tagId) }
+    val tagEditViewModel: TagEditViewModel = viewModel(factory = factory)
+    val uiState by tagEditViewModel.uiState.collectAsState()
 
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        tagEditViewModel.effect.collect { effect ->
+            when (effect) {
+                TagEditEffect.SaveSuccess -> navController.popBackStack()
+
+                is TagEditEffect.NavigateToRestrictApps -> {
+                    navController.navigate(MainRoute.FocusTagRestrictApps.create(effect.id))
+                }
+
+                is TagEditEffect.ShowMessage -> {
+                    scope.launch { snackbarHostState.showSnackbar(effect.text) }
+                }
+            }
+        }
+    }
+
+    FocusTagEditContent(
+        uiState = uiState,
+        snackbarHostState = snackbarHostState,
+        onBackClick = { navController.popBackStack() },
+        onSaveClick = tagEditViewModel::onSaveClicked,
+        onNameChanged = tagEditViewModel::onNameChanged,
+        onDescriptionChanged = tagEditViewModel::onDescriptionChanged,
+        onColorSelected = tagEditViewModel::onColorSelected,
+        onConfigureAppsClick = tagEditViewModel::onConfigureAppsClicked,
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun FocusTagEditContent(
+    uiState: TagEditUiState,
+    snackbarHostState: SnackbarHostState,
+    onBackClick: () -> Unit,
+    onSaveClick: () -> Unit,
+    onNameChanged: (String) -> Unit,
+    onDescriptionChanged: (String) -> Unit,
+    onColorSelected: (String) -> Unit,
+    onConfigureAppsClick: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -82,7 +134,7 @@ fun FocusTagEditScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                IconButton(onClick = { navController.popBackStack() }) {
+                IconButton(onClick = onBackClick) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Back",
@@ -90,25 +142,26 @@ fun FocusTagEditScreen(
                     )
                 }
                 Text(
-                    text = "Edit Tag",
+                    text = if (uiState.isCreateMode) "Create Tag" else "Edit Tag",
                     style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onBackground,
                 )
             }
             FilledTonalButton(
-                onClick = { navController.popBackStack() },
+                onClick = onSaveClick,
+                enabled = !uiState.isSaving,
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
                 ),
             ) {
-                Text("Save")
+                Text(if (uiState.isSaving) "Saving..." else "Save")
             }
         }
 
         OutlinedTextField(
-            value = tagName,
-            onValueChange = { tagName = it },
+            value = uiState.name,
+            onValueChange = onNameChanged,
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Tag Name") },
             shape = MaterialTheme.shapes.medium,
@@ -116,8 +169,8 @@ fun FocusTagEditScreen(
         )
 
         OutlinedTextField(
-            value = description,
-            onValueChange = { description = it },
+            value = uiState.description,
+            onValueChange = onDescriptionChanged,
             modifier = Modifier.fillMaxWidth(),
             label = { Text("Description") },
             shape = MaterialTheme.shapes.medium,
@@ -135,8 +188,13 @@ fun FocusTagEditScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                mindfulShades.forEach { shade ->
-                    val isActive = shade == selectedColor
+                uiState.availableColors.forEach { colorHex ->
+                    val shade = try {
+                        Color(colorHex.toColorInt())
+                    } catch (_: IllegalArgumentException) {
+                        MaterialTheme.colorScheme.primary
+                    }
+                    val isActive = colorHex.equals(uiState.selectedColorHex, ignoreCase = true)
                     Box(
                         modifier = Modifier
                             .size(40.dp)
@@ -164,7 +222,7 @@ fun FocusTagEditScreen(
                                 )
                         )
                         IconButton(
-                            onClick = { selectedColor = shade },
+                            onClick = { onColorSelected(colorHex) },
                             modifier = Modifier.size(40.dp)
                         ) {
                             Icon(
@@ -179,7 +237,7 @@ fun FocusTagEditScreen(
         }
 
         OutlinedCard(
-            onClick = { navController.navigate(MainRoute.FocusTagRestrictApps.create(tagId)) },
+            onClick = onConfigureAppsClick,
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
         ) {
@@ -214,7 +272,7 @@ fun FocusTagEditScreen(
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                         Text(
-                            text = "$restrictedCount apps restricted",
+                            text = "${uiState.restrictedAppCount} apps restricted",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -228,27 +286,36 @@ fun FocusTagEditScreen(
             }
         }
 
-        TextButton(onClick = { navController.popBackStack() }) {
-            Icon(
-                imageVector = Icons.Default.Delete,
-                contentDescription = "Delete tag",
-                tint = Color(0xFFFF8A80),
-            )
-            Text(
-                text = "Delete Tag",
-                color = Color(0xFFFF8A80),
-                modifier = Modifier.padding(start = 8.dp),
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium),
-            )
-        }
     }
+
+    SnackbarHost(
+        hostState = snackbarHostState,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    )
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun FocusTagEditPreviewDark() {
     MONKeyTheme(darkTheme = true) {
-        val nav = androidx.navigation.compose.rememberNavController()
-        FocusTagEditScreen(navController = nav, tagId = "1")
+        FocusTagEditContent(
+            uiState = TagEditUiState(
+                isCreateMode = false,
+                tagId = 1,
+                name = "Work",
+                description = "Work related",
+                selectedColorHex = "#FE9F4C",
+                restrictedAppCount = 4,
+            ),
+            snackbarHostState = SnackbarHostState(),
+            onBackClick = {},
+            onSaveClick = {},
+            onNameChanged = {},
+            onDescriptionChanged = {},
+            onColorSelected = {},
+            onConfigureAppsClick = {},
+        )
     }
 }
