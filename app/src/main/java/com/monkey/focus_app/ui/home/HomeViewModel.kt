@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.monkey.focus_app.data.AppRepository
 import com.monkey.focus_app.data.db.entity.Session
-import com.monkey.focus_app.data.db.entity.Tag
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -24,7 +23,7 @@ data class HomeSessionItemUi(
     val title: String,
     val timeslot: String,
     val duration: String,
-    val tag: String
+    val recurrence: String
 )
 
 data class HomeUiState(
@@ -57,15 +56,12 @@ class HomeViewModel(
         viewModelScope.launch {
             combine(
                 repository.getAllSession(),
-                repository.getAllTag(),
                 repository.getAllUserStats()
-            ){ sessions, tags, stats ->
-                val tagMap = tags.associateBy { it.tagID }
-
+            ){ sessions, stats ->
                val todaySessions = sessions
                    .filter{isToday(it.startDateTime)}
                    .sortedBy{it.startDateTime}
-                   .map{it.toHomeUi(tagMap)}
+                   .map{it.toHomeUi()}
 
                 HomeUiState(
                     isLoading = false,
@@ -97,25 +93,23 @@ class HomeViewModel(
         }
     }
 
-    private fun Session.toHomeUi(tagMap: Map<Int, Tag>): HomeSessionItemUi{
+    private fun Session.toHomeUi(): HomeSessionItemUi{
         val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
         val zone = ZoneId.systemDefault()
 
         val start = Instant.ofEpochMilli(startDateTime).atZone(zone).toLocalTime().format(timeFormatter)
         val end = Instant.ofEpochMilli(endDateTime).atZone(zone).toLocalTime().format(timeFormatter)
 
-        val tagLabel = tagIds
-            .firstOrNull()
-            ?.let { id -> tagMap[id]?.tagName }
-            ?.let { "#$it" }
-            ?: "#none"
+        val recurrenceLabel = recurrence
+            .lowercase()
+            .replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() }
 
         return HomeSessionItemUi(
             id = sessionID,
             title = sessionName,
             timeslot = "$start - $end",
             duration = "$durationMin min",
-            tag = tagLabel
+            recurrence = recurrenceLabel
         )
     }
 

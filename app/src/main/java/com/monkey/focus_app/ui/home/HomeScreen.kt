@@ -99,16 +99,25 @@ fun HomeScreenContent(
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 16.dp),
         contentPadding = PaddingValues(top = 24.dp, bottom = 100.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {
             TopBarSection()
         }
+        item{
+            Spacer(modifier = Modifier.height(8.dp))
+        }
         item {
             StartFocusButton(onClick = onStartFocusClick)
         }
+        item{
+            Spacer(modifier = Modifier.height(8.dp))
+        }
         item {
             StatsSection(weeklyFocusText = weeklyFocusText)
+        }
+        item{
+            Spacer(modifier = Modifier.height(8.dp))
         }
         item {
             HeaderWithViewAll(title = "Today's Sessions", onViewAllClick = onViewAllClick)
@@ -129,7 +138,7 @@ private fun TopBarSection() {
     ) {
         Column {
             Text(
-                text = "Welcome to MONKey",
+                text = "Welcome to MONKey 🙈",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground
             )
@@ -259,13 +268,13 @@ private fun SessionCard(session: HomeSessionItemUi) {
             )
         }
 
-        Column() {
+        Column(horizontalAlignment = Alignment.End) {
             Text(
                 text = session.duration,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
             )
-            // Tag Chip
+            // Recurrence Chip
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
@@ -273,7 +282,7 @@ private fun SessionCard(session: HomeSessionItemUi) {
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
                 Text(
-                    text = session.tag,
+                    text = session.recurrence,
                     style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -289,8 +298,8 @@ fun HomeScreenPreviewDark() {
     MONKeyTheme(darkTheme = true) {
         HomeScreenContent(
             sessions = listOf(
-                HomeSessionItemUi(1, "CSCI lecture", "09:00 - 10:00", "120 min", "LESSON"),
-                HomeSessionItemUi(2, "Math Study", "10:30 - 11:30", "60 min", "STUDY")
+                HomeSessionItemUi(1, "CSCI lecture", "09:00 - 10:00", "120 min", "Once"),
+                HomeSessionItemUi(2, "Math Study", "10:30 - 11:30", "60 min", "Weekly")
             ),
             weeklyFocusText = "4h 20m"
         )
@@ -303,8 +312,8 @@ fun HomeScreenPreviewLight() {
     MONKeyTheme(darkTheme = false) {
         HomeScreenContent(
             sessions = listOf(
-                HomeSessionItemUi(1, "CSCI lecture", "09:00 - 10:00", "120 min", "Lesson"),
-                HomeSessionItemUi(2, "Math Study", "10:30 - 11:30", "60 min", "STUDY")
+                HomeSessionItemUi(1, "CSCI lecture", "09:00 - 10:00", "120 min", "Once"),
+                HomeSessionItemUi(2, "Math Study", "10:30 - 11:30", "60 min", "Weekly")
             ),
             weeklyFocusText = "4h 20m"
         )
