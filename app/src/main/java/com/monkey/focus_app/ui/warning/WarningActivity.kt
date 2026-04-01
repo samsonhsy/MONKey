@@ -23,7 +23,7 @@ class WarningActivity : ComponentActivity() {
         setContent {
             MONKeyTheme {
                 val navController = rememberNavController()
-                val modeName = NavigationItem.Bhikkhu.route
+                val unlockLevel = 2
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     NavHost(
                         navController = navController,
@@ -33,19 +33,13 @@ class WarningActivity : ComponentActivity() {
                             Warning(
                                 modifier = Modifier.padding(innerPadding),
                                 navController = navController,
-                                modeName = modeName
                             )
                         }
-                        composable(NavigationItem.Novice.route) {
-                            Novice(
+                        composable(NavigationItem.Unlock.route) {
+                            Unlock(
                                 modifier = Modifier.padding(innerPadding),
-                                navController = navController
-                            )
-                        }
-                        composable(NavigationItem.Bhikkhu.route) {
-                            Bhikkhu(
-                                modifier = Modifier.padding(innerPadding),
-                                navController = navController
+                                navController = navController,
+                                unlockLevel = unlockLevel
                             )
                         }
                     }
@@ -60,6 +54,6 @@ class WarningActivity : ComponentActivity() {
 @Composable
 fun WarningPreview() {
     MONKeyTheme {
-//        warningScreen.Warning(navController = rememberNavController())
+//        Warning(navController = rememberNavController())
     }
 }
