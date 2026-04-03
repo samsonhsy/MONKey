@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +34,7 @@ import com.monkey.focus_app.ui.focus_tag.FocusTagEditScreen
 import com.monkey.focus_app.ui.focus_tag.RestrictAppsScreen
 import com.monkey.focus_app.ui.session.SessionEditScreen
 import com.monkey.focus_app.ui.session.SessionListScreen
+import com.monkey.focus_app.ui.settings.SettingsScreen
 import com.monkey.focus_app.ui.theme.MONKeyTheme
 
 
@@ -46,6 +48,7 @@ sealed class MainRoute(val route: String) {
     data object FocusTagRestrictApps : MainRoute("focus_tag_restrict_apps/{id}") {
         fun create(id: String) = "focus_tag_restrict_apps/$id"
     }
+    data object Settings : MainRoute("settings")
 
 //    id for editing specific session
     data object SessionEdit : MainRoute("session_edit/{id}") {
@@ -72,6 +75,11 @@ enum class TopLevelDestination(
         route = MainRoute.FocusTags.route,
         title = "Tags",
         icon = Icons.Default.Sell
+    ),
+    SETTINGS(
+        route = MainRoute.Settings.route,
+        title = "Settings",
+        icon = Icons.Default.Settings
     )
 }
 
@@ -150,6 +158,9 @@ fun MainNavigation(){
             ) { backStackEntry ->
                 val sessionId = backStackEntry.arguments?.getString("id") ?: "new"
                 SessionEditScreen(navController = navController, sessionId = sessionId)
+            }
+            composable(MainRoute.Settings.route) {
+                SettingsScreen()
             }
         }
     }
