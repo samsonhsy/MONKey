@@ -1,6 +1,10 @@
 package com.monkey.focus_app.ui.warning
 
 import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -14,6 +18,13 @@ class ShakeDetector(
 
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
     private val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+    private val vibrator: Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+        vibratorManager.defaultVibrator
+    } else {
+        @Suppress("DEPRECATION")
+        context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+    }
 
     private var lastShakeTime: Long = 0
     private val shakeThreshold = 12f
@@ -29,6 +40,10 @@ class ShakeDetector(
         sensorManager.unregisterListener(this)
     }
 
+    private fun vibrate() {
+        vibrator.vibrate(VibrationEffect.createOneShot(50, VibrationEffect.DEFAULT_AMPLITUDE))
+    }
+
     override fun onSensorChanged(event: SensorEvent?) {
         event?.let {
             val x = it.values[0]
@@ -41,6 +56,7 @@ class ShakeDetector(
                 val now = System.currentTimeMillis()
                 if (now - lastShakeTime > shakeCooldownMs) {
                     lastShakeTime = now
+                    vibrate()
                     onShake()
                 }
             }
