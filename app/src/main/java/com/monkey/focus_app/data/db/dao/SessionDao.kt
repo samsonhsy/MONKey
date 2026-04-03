@@ -20,8 +20,14 @@ interface SessionDao {
     @Query("SELECT * FROM session_table WHERE is_active = 1")
     fun getActiveSession(): Flow<Session?>
 
+    @Query("SELECT * FROM session_table WHERE is_active = 1 LIMIT 1")
+    suspend fun getActiveSessionNow(): Session?
+
+    @Query("SELECT * FROM session_table WHERE end_datetime > :nowMillis")
+    suspend fun getUpcomingOrOngoingSessions(nowMillis: Long): List<Session>
+
     @Insert
-    suspend fun insertAll(vararg session: Session)
+    suspend fun insertAll(vararg session: Session) : LongArray
 
     @Update
     suspend fun updateAll(vararg session: Session)
