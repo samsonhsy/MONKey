@@ -29,7 +29,10 @@
         </activity>
         <activity
             android:name=".ui.warning.WarningActivity"
-            android:exported="false">
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.MONKey">
         </activity>
 
         <!-- Foreground focus service -->
