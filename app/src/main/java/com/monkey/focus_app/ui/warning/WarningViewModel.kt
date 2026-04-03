@@ -137,7 +137,7 @@ class WarningViewModel(
                 }
             }
 
-            _effect.emit(WarningEffect.CloseWarning)
+            _effect.emit(WarningEffect.NavigateToDeviceHome)
         }
     }
 }

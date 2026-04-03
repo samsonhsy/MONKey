@@ -105,8 +105,9 @@ fun SessionEditScreen(
             userStatsDao = database.userStatsDao()
         )
     }
+    val appContext = context.applicationContext
     val factory = remember(repository, sessionId) {
-        SessionEditViewModelFactory(repository, sessionId)
+        SessionEditViewModelFactory(repository, sessionId, appContext)
     }
     val sessionEditViewModel: SessionEditViewModel = viewModel(factory = factory)
     val uiState by sessionEditViewModel.uiState.collectAsState()

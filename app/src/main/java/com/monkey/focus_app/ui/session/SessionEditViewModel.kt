@@ -1,9 +1,11 @@
 package com.monkey.focus_app.ui.session
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.monkey.focus_app.data.AppRepository
 import com.monkey.focus_app.data.db.entity.Session
+import com.monkey.focus_app.service.scheduler.AlarmScheduler
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -49,9 +51,10 @@ sealed interface SessionEditEffect {
 
 class SessionEditViewModel(
     private val repository: AppRepository,
-    private val sessionIdArg: String
+    private val sessionIdArg: String,
+    appContext: Context
 ) : ViewModel() {
-
+    private  val alarmScheduler = AlarmScheduler(appContext)
     private val _uiState = MutableStateFlow(SessionEditUiState())
     val uiState: StateFlow<SessionEditUiState> = _uiState.asStateFlow()
 
@@ -245,9 +248,15 @@ class SessionEditViewModel(
                 )
 
                 if (state.isCreateMode) {
-                    repository.insertAllSession(session)
+                    val insertedIds = repository.insertAllSession(session)
+                    val newId = insertedIds.firstOrNull()?.toInt()?:throw IllegalStateException("Failed to insert session")
+                    val savedSession = session.copy(sessionID = newId)
+                    alarmScheduler.scheduleSession(savedSession)
                 } else {
+                    val existingId = state.sessionId ?: throw IllegalStateException("Missing session id for update")
+                    alarmScheduler.cancelSession(existingId)
                     repository.updateAllSession(session)
+                    alarmScheduler.scheduleSession(session)
                 }
 
                 _uiState.value = _uiState.value.copy(isSaving = false)

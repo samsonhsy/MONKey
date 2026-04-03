@@ -43,7 +43,8 @@ fun SessionListScreen(navController: NavController) {
             userStatsDao = database.userStatsDao()
         )
     }
-    val factory = remember(repository) { SessionListViewModelFactory(repository) }
+    val appContext = context.applicationContext
+    val factory = remember(repository, appContext) { SessionListViewModelFactory(repository, appContext) }
     val sessionListViewModel: SessionListViewModel = viewModel(factory = factory)
     val uiState by sessionListViewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -180,10 +181,11 @@ fun SessionListContent(
 
 @Composable
 private fun TopBarSection(isDeleteMode: Boolean, onToggleDeleteMode: () -> Unit) {
+    Spacer(modifier = Modifier.height(24.dp))
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 24.dp),
+            .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -295,19 +297,38 @@ private fun UpcomingSessionCard(
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.AccessTime,
-                        contentDescription = "Time",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = session.time,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ){
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.AccessTime,
+                            contentDescription = "Time",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = session.time,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange, // Calendar Icon
+                            contentDescription = "Date",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = session.date,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 // Tags Row
@@ -468,7 +489,8 @@ private val previewUpcoming = listOf(
         time = "07:00 - 09:00",
         tags = listOf("#meditation", "#mindful"),
         tagColors = listOf("#5DD39E", "#38C8C2"),
-        recurrence = "Daily"
+        recurrence = "Daily",
+        date = "Oct 12, 2023",
     ),
     UpcomingSessionUi(
         id = 2,
@@ -476,7 +498,8 @@ private val previewUpcoming = listOf(
         time = "09:00 - 10:00",
         tags = listOf("#work"),
         tagColors = listOf("#FE9F4C"),
-        recurrence = "Weekly"
+        recurrence = "Weekly",
+        date = "Oct 12, 2023",
     )
 )
 private val previewHistory = listOf(
