@@ -11,8 +11,10 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import com.monkey.focus_app.service.accessibility.MonkeyAccessibilityService
+import androidx.core.net.toUri
 
 data class PermissionChecklistStatus(
     val accessibilityEnabled: Boolean,
@@ -48,10 +50,18 @@ object PermissionSetup {
     fun createAccessibilitySettingsIntent(): Intent =
         Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
 
-    fun createExactAlarmSettingsIntent(context: Context): Intent =
-        Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
-            data = Uri.parse("package:${context.packageName}")
+    @RequiresApi(Build.VERSION_CODES.S)
+    fun createExactAlarmSettingsIntent(context: Context): Intent {
+        val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+            data = "package:${context.packageName}".toUri()
         }
+        if (intent.resolveActivity(context.packageManager) == null) {
+            return Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                data = "package:${context.packageName}".toUri()
+            }
+        }
+        return intent
+    }
 
     private fun isAccessibilityEnabled(context: Context): Boolean {
         val manager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
