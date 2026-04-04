@@ -37,6 +37,7 @@ data class SessionEditUiState(
     val selectedHour: Int = 9,
     val selectedMinute: Int = 0,
     val durationMinutes: Int = 30,
+    val endTimeMillis: Long? = null,
     val selectedRecurrence: String = "ONCE",
     val selectedUnlockLevel: String = "NOVICE",
     val reminderIndex: Float = 1f,
@@ -127,6 +128,8 @@ class SessionEditViewModel(
                 .toInstant()
                 .toEpochMilli()
 
+            val endTimeMillis = session.endDateTime
+
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 isCreateMode = false,
@@ -137,6 +140,7 @@ class SessionEditViewModel(
                 selectedHour = localDateTime.hour,
                 selectedMinute = localDateTime.minute,
                 durationMinutes = session.durationMin,
+                endTimeMillis = endTimeMillis,
                 selectedRecurrence = session.recurrence.uppercase(),
                 selectedUnlockLevel = session.unlockKeyLevel.uppercase(),
                 reminderIndex = reminderOffsetToIndex(session.reminderOffsetMinutes),
@@ -170,7 +174,10 @@ class SessionEditViewModel(
             }
             return
         }
-        _uiState.value = _uiState.value.copy(selectedDateMillis = millis)
+        _uiState.value = _uiState.value.copy(
+            selectedDateMillis = millis,
+            endTimeMillis = null
+        )
     }
 
     fun onTimeChanged(hour: Int, minute: Int) {
@@ -182,11 +189,19 @@ class SessionEditViewModel(
             }
             return
         }
-        _uiState.value = _uiState.value.copy(selectedHour = hour, selectedMinute = minute)
+        _uiState.value = _uiState.value.copy(
+            selectedHour = hour,
+            selectedMinute = minute,
+            endTimeMillis = null
+        )
     }
 
     fun onDurationChanged(value: Int) {
-        _uiState.value = _uiState.value.copy(durationMinutes = value.coerceIn(5, 240))
+        val currentDuration = _uiState.value.durationMinutes
+        _uiState.value = _uiState.value.copy(
+            durationMinutes = value.coerceIn(5, 240),
+            endTimeMillis = if (currentDuration != value) null else _uiState.value.endTimeMillis
+        )
     }
 
     fun onRecurrenceChanged(value: String) {
@@ -238,14 +253,18 @@ class SessionEditViewModel(
                     return@launch
                 }
 
-                val endMillis = startMillis + state.durationMinutes * 60_000L
+                val (endMillis, finalDuration) = if (state.endTimeMillis != null && state.endTimeMillis > startMillis) {
+                    state.endTimeMillis to ((state.endTimeMillis - startMillis) / 60_000L).toInt()
+                } else {
+                    startMillis + state.durationMinutes * 60_000L to state.durationMinutes
+                }
 
                 val session = Session(
                     sessionID = state.sessionId ?: 0,
                     sessionName = state.title.trim(),
                     startDateTime = startMillis,
                     endDateTime = endMillis,
-                    durationMin = state.durationMinutes,
+                    durationMin = finalDuration,
                     recurrence = state.selectedRecurrence,
                     tagIds = state.selectedTagIds.toList().sorted(),
                     unlockKeyLevel = state.selectedUnlockLevel,
@@ -306,7 +325,8 @@ class SessionEditViewModel(
             selectedDateMillis = dateMillis,
             selectedHour = startDateTime.hour,
             selectedMinute = startDateTime.minute,
-            durationMinutes = if (durationMinutes > 0) durationMinutes.coerceIn(5, 240) else _uiState.value.durationMinutes
+            durationMinutes = if (durationMinutes > 0) durationMinutes else _uiState.value.durationMinutes,
+            endTimeMillis = endTimeMillis
         )
 
         viewModelScope.launch {

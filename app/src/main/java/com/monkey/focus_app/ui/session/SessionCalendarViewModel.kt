@@ -158,7 +158,12 @@ class SessionCalendarViewModel(
                 val id = cursor.getLong(idIndex)
                 val title = cursor.getString(titleIndex) ?: "Untitled Event"
                 val startMillis = cursor.getLong(startIndex)
-                val endMillis = cursor.getLong(endIndex)
+                var endMillis = cursor.getLong(endIndex)
+
+                if (endMillis == 0L) {
+                    endMillis = startMillis + 30 * 60 * 1000L
+                }
+
                 val isAllDay = cursor.getInt(allDayIndex) == 1
 
                 val formattedTime = if (isAllDay) {

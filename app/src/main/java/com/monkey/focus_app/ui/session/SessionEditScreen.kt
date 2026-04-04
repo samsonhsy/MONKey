@@ -20,7 +20,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -34,9 +35,9 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -77,19 +78,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.monkey.focus_app.data.AppRepository
 import com.monkey.focus_app.data.db.DatabaseBuilder
+import com.monkey.focus_app.ui.navigation.MainRoute
 import com.monkey.focus_app.ui.theme.MONKeyTheme
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import com.monkey.focus_app.ui.home.HomeEffect
-import com.monkey.focus_app.ui.navigation.MainRoute
-import com.monkey.focus_app.ui.navigation.navigateToTopLevel
-import kotlinx.coroutines.launch
-import kotlin.text.isDigit
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -125,9 +121,11 @@ fun SessionEditScreen(
                 SessionEditEffect.NavigateToTagEdit -> {
                     navController.navigate(MainRoute.FocusTagEdit.route)
                 }
+
                 is SessionEditEffect.ShowMessage -> {
                     scope.launch { snackbarHostState.showSnackbar(effect.text) }
                 }
+
                 is SessionEditEffect.NavigateToCalendar -> {
                     navController.navigate(MainRoute.SessionCalendar.create(sessionId))
                 }
@@ -187,7 +185,7 @@ fun SessionEditContent(
     onUnlockLevelChanged: (String) -> Unit,
     onReminderIndexChanged: (Float) -> Unit,
     onEmptyTagClicked: () -> Unit,
-    onImportFromCalendarClicked:() -> Unit,
+    onImportFromCalendarClicked: () -> Unit,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -202,7 +200,13 @@ fun SessionEditContent(
         .format(dateFormatter)
 
     val startTime = LocalTime.of(uiState.selectedHour, uiState.selectedMinute)
-    val endTime = startTime.plusMinutes(uiState.durationMinutes.toLong())
+    val endTime = if (uiState.endTimeMillis != null) {
+        Instant.ofEpochMilli(uiState.endTimeMillis)
+            .atZone(zoneId)
+            .toLocalTime()
+    } else {
+        startTime.plusMinutes(uiState.durationMinutes.toLong())
+    }
     val timeText = "${startTime.format(timeFormatter)} - ${endTime.format(timeFormatter)}"
 
     val recurrenceOptions = listOf("ONCE", "DAILY", "WEEKLY")
@@ -216,10 +220,15 @@ fun SessionEditContent(
     fun commitDurationInput() {
         val parsed = durationInput.toIntOrNull()
         if (parsed == null) {
+            if (durationInput.isEmpty()) return
             durationInput = uiState.durationMinutes.toString()
             return
         }
         val clamped = parsed.coerceIn(5, 240)
+        if (clamped == uiState.durationMinutes) {
+            durationInput = clamped.toString()
+            return
+        }
         onDurationChanged(clamped)
         durationInput = clamped.toString()
     }
@@ -365,7 +374,10 @@ fun SessionEditContent(
                         .heightIn(min = 76.dp),
                     shape = MaterialTheme.shapes.medium,
                 ) {
-                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Text("Date", style = MaterialTheme.typography.labelMedium)
                         Text(
                             text = dateText,
@@ -382,7 +394,10 @@ fun SessionEditContent(
                         .heightIn(min = 76.dp),
                     shape = MaterialTheme.shapes.medium,
                 ) {
-                    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
                         Text("Time", style = MaterialTheme.typography.labelMedium)
                         Text(
                             text = timeText,
@@ -406,7 +421,7 @@ fun SessionEditContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
 
-                ) {
+                    ) {
                     IconButton(
                         onClick = {
                             val base = durationInput.toIntOrNull() ?: uiState.durationMinutes
@@ -599,7 +614,8 @@ fun SessionEditContent(
     }
 
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = uiState.selectedDateMillis)
+        val datePickerState =
+            rememberDatePickerState(initialSelectedDateMillis = uiState.selectedDateMillis)
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
