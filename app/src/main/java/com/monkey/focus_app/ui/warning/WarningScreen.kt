@@ -192,6 +192,7 @@ fun Unlock(modifier: Modifier,
            onSubmit: () -> Unit,
            onShakeStep: () -> Unit,
            unlockPhrase: String,
+           unlockLevel: String,
            onCancel: () -> Unit) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -200,14 +201,15 @@ fun Unlock(modifier: Modifier,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-
-                StepProgressBar(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(0.dp, 50.dp),
-                    numberOfSteps = 1,
-                    currentStep = state.currentStep
-                )
+                if (unlockLevel.uppercase() == "BHIKKHU"){
+                    StepProgressBar(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(0.dp, 50.dp),
+                        numberOfSteps = 1,
+                        currentStep = state.currentStep
+                    )
+                }
             }
         }
     ) {
@@ -261,7 +263,6 @@ fun Step(
         contentAlignment = Alignment.Center
     ) {
         if (currentStep == 0) {
-
             HorizontalDivider(
                 modifier = Modifier
                     .align(
@@ -364,11 +365,11 @@ fun Novice(
             )
             Text(
                 text = buildAnnotatedString {
-                    append("Type ")
+                    append("Type\n ")
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(unlockPhrase)
+                        append("\"" + unlockPhrase + "\"" )
                     }
-                    append(" to unlock.")
+                    append(" \nto unlock.")
                 },
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.titleLarge
@@ -578,6 +579,7 @@ fun UnlockPreviewLight() {
             onSubmit = {},
             onShakeStep = {},
             unlockPhrase = "I have decided not to focus and be addicted to my cell phone again.",
+            unlockLevel = "Novice",
             onCancel = {}
         )
     }
@@ -595,6 +597,7 @@ fun UnlockPreviewDark() {
             onSubmit = {},
             onShakeStep = {},
             unlockPhrase = "I have decided not to focus and be addicted to my cell phone again.",
+            unlockLevel = "BHIKKHU",
             onCancel = {}
         )
     }

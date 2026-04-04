@@ -113,6 +113,7 @@ class WarningActivity : ComponentActivity() {
                                 onSubmit = viewModel::onSubmitUnlock,
                                 onShakeStep = viewModel::onShakeStepCompleted,
                                 unlockPhrase = viewModel.unlockPhrase,
+                                unlockLevel = viewModel.unlockLevel,
                                 onCancel = {
                                     viewModel.onCancelUnlock()
                                     navController.popBackStack()
