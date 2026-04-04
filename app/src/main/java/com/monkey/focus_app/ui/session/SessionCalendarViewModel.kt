@@ -128,31 +128,35 @@ class SessionCalendarViewModel(
             .toEpochMilli()
 
         val projection = arrayOf(
-            CalendarContract.Events._ID,
-            CalendarContract.Events.TITLE,
-            CalendarContract.Events.DTSTART,
-            CalendarContract.Events.DTEND,
-            CalendarContract.Events.ALL_DAY
+            CalendarContract.Instances.EVENT_ID,
+            CalendarContract.Instances.TITLE,
+            CalendarContract.Instances.BEGIN,
+            CalendarContract.Instances.END,
+            CalendarContract.Instances.ALL_DAY
         )
 
-        val selection = "${CalendarContract.Events.DTSTART} >= ? AND ${CalendarContract.Events.DTSTART} <= ?"
-        val selectionArgs = arrayOf(now.toString(), endTime.toString())
-        val sortOrder = "${CalendarContract.Events.DTSTART} ASC"
+        val uri = CalendarContract.Instances.CONTENT_URI
+            .buildUpon()
+            .appendPath(now.toString())
+            .appendPath(endTime.toString())
+            .build()
+
+        val sortOrder = "${CalendarContract.Instances.BEGIN} ASC"
 
         val events = mutableListOf<CalendarEventUi>()
 
         contentResolver.query(
-            CalendarContract.Events.CONTENT_URI,
+            uri,
             projection,
-            selection,
-            selectionArgs,
+            null,
+            null,
             sortOrder
         )?.use { cursor ->
-            val idIndex = cursor.getColumnIndex(CalendarContract.Events._ID)
-            val titleIndex = cursor.getColumnIndex(CalendarContract.Events.TITLE)
-            val startIndex = cursor.getColumnIndex(CalendarContract.Events.DTSTART)
-            val endIndex = cursor.getColumnIndex(CalendarContract.Events.DTEND)
-            val allDayIndex = cursor.getColumnIndex(CalendarContract.Events.ALL_DAY)
+            val idIndex = cursor.getColumnIndex(CalendarContract.Instances.EVENT_ID)
+            val titleIndex = cursor.getColumnIndex(CalendarContract.Instances.TITLE)
+            val startIndex = cursor.getColumnIndex(CalendarContract.Instances.BEGIN)
+            val endIndex = cursor.getColumnIndex(CalendarContract.Instances.END)
+            val allDayIndex = cursor.getColumnIndex(CalendarContract.Instances.ALL_DAY)
 
             while (cursor.moveToNext()) {
                 val id = cursor.getLong(idIndex)
