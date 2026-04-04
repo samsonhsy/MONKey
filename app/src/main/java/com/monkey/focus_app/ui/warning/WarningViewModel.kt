@@ -66,7 +66,7 @@ class WarningViewModel(
     val unlockPhrase = "I have decided not to focus and be addicted to my cell phone again."
 
     companion object {
-        const val SHAKE_TARGET = 50
+        const val SHAKE_TARGET = 100
     }
 
     fun onNewBlockedApp(sessionId: Int, blockedPackage: String, unlockLevel: String) {
