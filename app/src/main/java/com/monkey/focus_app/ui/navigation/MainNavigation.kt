@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -28,10 +28,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.monkey.focus_app.ui.home.HomeScreen
-import com.monkey.focus_app.ui.focus_tag.FocusTagScreen
 import com.monkey.focus_app.ui.focus_tag.FocusTagEditScreen
+import com.monkey.focus_app.ui.focus_tag.FocusTagScreen
 import com.monkey.focus_app.ui.focus_tag.RestrictAppsScreen
+import com.monkey.focus_app.ui.home.HomeScreen
+import com.monkey.focus_app.ui.session.SessionCalendarScreen
 import com.monkey.focus_app.ui.session.SessionEditScreen
 import com.monkey.focus_app.ui.session.SessionListScreen
 import com.monkey.focus_app.ui.settings.SettingsScreen
@@ -45,14 +46,20 @@ sealed class MainRoute(val route: String) {
     data object FocusTagEdit : MainRoute("focus_tag_edit/{id}") {
         fun create(id: String) = "focus_tag_edit/$id"
     }
+
     data object FocusTagRestrictApps : MainRoute("focus_tag_restrict_apps/{id}") {
         fun create(id: String) = "focus_tag_restrict_apps/$id"
     }
+
     data object Settings : MainRoute("settings")
 
-//    id for editing specific session
+    //    id for editing specific session
     data object SessionEdit : MainRoute("session_edit/{id}") {
         fun create(id: String) = "session_edit/$id"
+    }
+
+    data object SessionCalendar : MainRoute("session_calendar/{id}") {
+        fun create(id: String) = "session_calendar/$id"
     }
 }
 
@@ -84,25 +91,27 @@ enum class TopLevelDestination(
 }
 
 @Composable
-fun MainNavigation(){
+fun MainNavigation() {
     val navController = rememberNavController()
     Scaffold(
         bottomBar = {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentDestination = navBackStackEntry?.destination
-            val showBottomBar = TopLevelDestination.entries.any{
+            val showBottomBar = TopLevelDestination.entries.any {
                 it.route == currentDestination?.route
             }
             if (showBottomBar) {
                 NavigationBar {
                     TopLevelDestination.entries.forEach { destination ->
                         NavigationBarItem(
-                            selected = currentDestination?.hierarchy?.any{
+                            selected = currentDestination?.hierarchy?.any {
                                 it.route == destination.route
                             } == true,
-                            icon = { Icon(
-                                destination.icon, contentDescription = destination.title
-                            ) },
+                            icon = {
+                                Icon(
+                                    destination.icon, contentDescription = destination.title
+                                )
+                            },
                             label = { Text(destination.title) },
                             onClick = {
                                 navController.navigateToTopLevel(destination.route)
@@ -162,6 +171,13 @@ fun MainNavigation(){
             composable(MainRoute.Settings.route) {
                 SettingsScreen()
             }
+            composable(
+                route = MainRoute.SessionCalendar.route,
+                arguments = listOf(navArgument("id") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val sessionId = backStackEntry.arguments?.getString("id") ?: "new"
+                SessionCalendarScreen(navController = navController, sessionId = sessionId)
+            }
         }
     }
 
@@ -174,6 +190,7 @@ fun MainNavigationPreviewDark() {
         MainNavigation()
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun MainNavigationPreviewLight() {

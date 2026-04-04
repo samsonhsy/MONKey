@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.monkey.focus_app.data.AppRepository
 import com.monkey.focus_app.data.db.entity.Session
 import com.monkey.focus_app.service.scheduler.AlarmScheduler
-import com.monkey.focus_app.ui.home.HomeEffect
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -49,6 +48,7 @@ sealed interface SessionEditEffect {
     data object SaveSuccess : SessionEditEffect
     data object NavigateToTagEdit : SessionEditEffect
     data class ShowMessage(val text: String) : SessionEditEffect
+    data object NavigateToCalendar : SessionEditEffect
 }
 
 class SessionEditViewModel(
@@ -272,6 +272,45 @@ class SessionEditViewModel(
                 _uiState.value = _uiState.value.copy(isSaving = false)
                 _effect.emit(SessionEditEffect.ShowMessage(throwable.message ?: "Failed to save session"))
             }
+        }
+    }
+
+    fun onImportFromCalendarClicked(){
+        viewModelScope.launch {
+            _effect.emit(SessionEditEffect.NavigateToCalendar)
+        }
+    }
+
+    fun onCalendarEventImported(
+        title: String,
+        startTimeMillis: Long,
+        endTimeMillis: Long
+    ) {
+        val startDateTime = Instant.ofEpochMilli(startTimeMillis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime()
+
+        val endDateTime = Instant.ofEpochMilli(endTimeMillis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime()
+
+        val dateMillis = startDateTime.toLocalDate()
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        val durationMinutes = java.time.Duration.between(startDateTime, endDateTime).toMinutes().toInt()
+
+        _uiState.value = _uiState.value.copy(
+            title = title,
+            selectedDateMillis = dateMillis,
+            selectedHour = startDateTime.hour,
+            selectedMinute = startDateTime.minute,
+            durationMinutes = if (durationMinutes > 0) durationMinutes.coerceIn(5, 240) else _uiState.value.durationMinutes
+        )
+
+        viewModelScope.launch {
+            _effect.emit(SessionEditEffect.ShowMessage("Event imported: $title"))
         }
     }
 

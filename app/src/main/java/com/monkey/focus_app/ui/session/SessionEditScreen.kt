@@ -128,7 +128,28 @@ fun SessionEditScreen(
                 is SessionEditEffect.ShowMessage -> {
                     scope.launch { snackbarHostState.showSnackbar(effect.text) }
                 }
+                is SessionEditEffect.NavigateToCalendar -> {
+                    navController.navigate(MainRoute.SessionCalendar.create(sessionId))
+                }
             }
+        }
+    }
+
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+    val calendarTitle = savedStateHandle?.get<String>("calendar_title")
+    val calendarStartMillis = savedStateHandle?.get<Long>("calendar_start_millis")
+    val calendarEndMillis = savedStateHandle?.get<Long>("calendar_end_millis")
+
+    LaunchedEffect(calendarTitle, calendarStartMillis, calendarEndMillis) {
+        if (calendarTitle != null && calendarStartMillis != null && calendarEndMillis != null) {
+            savedStateHandle.remove<String>("calendar_title")
+            savedStateHandle.remove<Long>("calendar_start_millis")
+            savedStateHandle.remove<Long>("calendar_end_millis")
+            sessionEditViewModel.onCalendarEventImported(
+                title = calendarTitle,
+                startTimeMillis = calendarStartMillis,
+                endTimeMillis = calendarEndMillis
+            )
         }
     }
 
@@ -145,7 +166,8 @@ fun SessionEditScreen(
         onRecurrenceChanged = sessionEditViewModel::onRecurrenceChanged,
         onUnlockLevelChanged = sessionEditViewModel::onUnlockLevelChanged,
         onReminderIndexChanged = sessionEditViewModel::onReminderIndexChanged,
-        onEmptyTagClicked = sessionEditViewModel::onEmptyTagClicked
+        onEmptyTagClicked = sessionEditViewModel::onEmptyTagClicked,
+        onImportFromCalendarClicked = sessionEditViewModel::onImportFromCalendarClicked,
     )
 }
 
@@ -164,7 +186,8 @@ fun SessionEditContent(
     onRecurrenceChanged: (String) -> Unit,
     onUnlockLevelChanged: (String) -> Unit,
     onReminderIndexChanged: (Float) -> Unit,
-    onEmptyTagClicked: () -> Unit
+    onEmptyTagClicked: () -> Unit,
+    onImportFromCalendarClicked:() -> Unit,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -252,7 +275,7 @@ fun SessionEditContent(
             }
 
             OutlinedButton(
-                onClick = { },
+                onClick = { onImportFromCalendarClicked() },
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
                 contentPadding = PaddingValues(vertical = 12.dp),
@@ -654,7 +677,8 @@ private fun SessionEditContentPreviewDark() {
             onRecurrenceChanged = {},
             onUnlockLevelChanged = {},
             onReminderIndexChanged = {},
-            onEmptyTagClicked = {}
+            onEmptyTagClicked = {},
+            onImportFromCalendarClicked = {}
         )
     }
 }
@@ -688,7 +712,8 @@ private fun SessionEditContentPreviewLight() {
             onRecurrenceChanged = {},
             onUnlockLevelChanged = {},
             onReminderIndexChanged = {},
-            onEmptyTagClicked = {}
+            onEmptyTagClicked = {},
+            onImportFromCalendarClicked = {}
         )
     }
 }
