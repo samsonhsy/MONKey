@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.monkey.focus_app.data.AppRepository
 import com.monkey.focus_app.data.db.entity.Session
 import com.monkey.focus_app.service.scheduler.AlarmScheduler
+import com.monkey.focus_app.ui.home.HomeEffect
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -46,6 +47,7 @@ data class SessionEditUiState(
 
 sealed interface SessionEditEffect {
     data object SaveSuccess : SessionEditEffect
+    data object NavigateToTagEdit : SessionEditEffect
     data class ShowMessage(val text: String) : SessionEditEffect
 }
 
@@ -153,6 +155,11 @@ class SessionEditViewModel(
         _uiState.value = _uiState.value.copy(selectedTagIds = updated)
     }
 
+    fun onEmptyTagClicked(){
+        viewModelScope.launch {
+            _effect.emit(SessionEditEffect.NavigateToTagEdit)
+        }
+    }
     fun onDateChanged(millis: Long?) {
         if (millis == null) return
         val zone = ZoneId.systemDefault()

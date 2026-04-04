@@ -85,6 +85,9 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import com.monkey.focus_app.ui.home.HomeEffect
+import com.monkey.focus_app.ui.navigation.MainRoute
+import com.monkey.focus_app.ui.navigation.navigateToTopLevel
 import kotlinx.coroutines.launch
 import kotlin.text.isDigit
 
@@ -119,6 +122,9 @@ fun SessionEditScreen(
         sessionEditViewModel.effect.collect { effect ->
             when (effect) {
                 SessionEditEffect.SaveSuccess -> navController.popBackStack()
+                SessionEditEffect.NavigateToTagEdit -> {
+                    navController.navigate(MainRoute.FocusTagEdit.route)
+                }
                 is SessionEditEffect.ShowMessage -> {
                     scope.launch { snackbarHostState.showSnackbar(effect.text) }
                 }
@@ -139,6 +145,7 @@ fun SessionEditScreen(
         onRecurrenceChanged = sessionEditViewModel::onRecurrenceChanged,
         onUnlockLevelChanged = sessionEditViewModel::onUnlockLevelChanged,
         onReminderIndexChanged = sessionEditViewModel::onReminderIndexChanged,
+        onEmptyTagClicked = sessionEditViewModel::onEmptyTagClicked
     )
 }
 
@@ -157,6 +164,7 @@ fun SessionEditContent(
     onRecurrenceChanged: (String) -> Unit,
     onUnlockLevelChanged: (String) -> Unit,
     onReminderIndexChanged: (Float) -> Unit,
+    onEmptyTagClicked: () -> Unit
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
@@ -175,7 +183,8 @@ fun SessionEditContent(
     val timeText = "${startTime.format(timeFormatter)} - ${endTime.format(timeFormatter)}"
 
     val recurrenceOptions = listOf("ONCE", "DAILY", "WEEKLY")
-    val levelOptions = listOf("NOVICE", "BHIKKHU", "ABBOT")
+    val levelOptions = listOf("NOVICE", "BHIKKHU")
+//    val levelOptions = listOf("NOVICE", "BHIKKHU", "ABBOT")
 
     var durationInput by rememberSaveable(uiState.sessionId, uiState.durationMinutes) {
         mutableStateOf(uiState.durationMinutes.toString())
@@ -269,7 +278,10 @@ fun SessionEditContent(
                 singleLine = true,
             )
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Text(
                     text = "Tags",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
@@ -278,7 +290,9 @@ fun SessionEditContent(
 
                 if (uiState.availableTags.isEmpty()) {
                     ElevatedCard(
-                        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        onClick = onEmptyTagClicked
                     ) {
                         Text(
                             text = "No tags yet. Create tags first in Tags screen.",
@@ -624,11 +638,7 @@ private fun SessionEditContentPreviewDark() {
             uiState = SessionEditUiState(
                 isCreateMode = true,
                 title = "Deep Work",
-                availableTags = listOf(
-                    SessionTagOptionUi(1, "Work", "#FE9F4C"),
-                    SessionTagOptionUi(2, "Study", "#4FB2F8"),
-                    SessionTagOptionUi(3, "Wellness", "#5DD39E")
-                ),
+                availableTags = listOf(),
                 selectedTagIds = setOf(1, 2),
                 durationMinutes = 45,
                 reminderIndex = 2f
@@ -643,7 +653,8 @@ private fun SessionEditContentPreviewDark() {
             onDurationChanged = {},
             onRecurrenceChanged = {},
             onUnlockLevelChanged = {},
-            onReminderIndexChanged = {}
+            onReminderIndexChanged = {},
+            onEmptyTagClicked = {}
         )
     }
 }
@@ -676,7 +687,8 @@ private fun SessionEditContentPreviewLight() {
             onDurationChanged = {},
             onRecurrenceChanged = {},
             onUnlockLevelChanged = {},
-            onReminderIndexChanged = {}
+            onReminderIndexChanged = {},
+            onEmptyTagClicked = {}
         )
     }
 }
