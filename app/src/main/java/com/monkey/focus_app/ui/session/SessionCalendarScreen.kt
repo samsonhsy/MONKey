@@ -1,10 +1,12 @@
 package com.monkey.focus_app.ui.session
 
 import android.Manifest
+import android.annotation.SuppressLint
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,21 +28,18 @@ import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,6 +48,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.monkey.focus_app.ui.theme.MONKeyTheme
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -64,7 +65,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SessionCalendarScreen(
     navController: NavController,
@@ -114,66 +114,44 @@ fun SessionCalendarScreen(
             }
         }
     }
-
+    @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Select Calendar Event",
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = viewModel::onRefresh) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
-        },
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            FilledTonalButton(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(10.dp, 0.dp, 10.dp, 10.dp),
-                onClick = viewModel::onConfirmSelection,
-                enabled = uiState.selectedEventId != null,
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Import")
+                Button(
+                    onClick = viewModel::onConfirmSelection,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = uiState.selectedEventId != null,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                    shape = RoundedCornerShape(14.dp),
+                    contentPadding = PaddingValues(vertical = 12.dp),
+                ) {
+                    Icon(Icons.Default.Check, contentDescription = "Confirm selection")
+                    Text(
+                        text = "Import",
+                        modifier = Modifier.padding(start = 8.dp),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    )
+                }
             }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { innerPadding ->
         SessionCalendarContent(
-            modifier = Modifier.padding(innerPadding),
             uiState = uiState,
             onEventToggled = viewModel::onEventToggled,
-            onRequestPermission = { permissionLauncher.launch(Manifest.permission.READ_CALENDAR) }
+            onRequestPermission = { permissionLauncher.launch(Manifest.permission.READ_CALENDAR) },
+            onBackClick = { navController.popBackStack() },
+            onRefresh = viewModel::onRefresh
         )
     }
 }
@@ -183,6 +161,8 @@ fun SessionCalendarContent(
     uiState: SessionCalendarUiState,
     onEventToggled: (Long) -> Unit,
     onRequestPermission: () -> Unit,
+    onBackClick: () -> Unit,
+    onRefresh: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val dateFormatter = remember { DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH) }
@@ -214,24 +194,64 @@ fun SessionCalendarContent(
             }
 
             else -> {
-                LazyColumn(
+                Column(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    items(uiState.events, key = { it.id }) { event ->
-                        val isSelected = uiState.selectedEventId == event.id
-                        val eventDate = Instant.ofEpochMilli(event.startTimeMillis)
-                            .atZone(ZoneId.systemDefault())
-                            .toLocalDate()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            IconButton(onClick = onBackClick) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "Back",
+                                    tint = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                            Text(
+                                text = "Select Calendar Event",
+                                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                                color = MaterialTheme.colorScheme.onBackground,
+                            )
+                        }
 
-                        EventCard(
-                            event = event,
-                            isSelected = isSelected,
-                            onToggle = { onEventToggled(event.id) },
-                            dateFormatter = dateFormatter,
-                            eventDate = eventDate
-                        )
+                        IconButton(onClick = onRefresh) {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = "Refresh",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        items(uiState.events, key = { it.id }) { event ->
+                            val isSelected = uiState.selectedEventId == event.id
+                            val eventDate = Instant.ofEpochMilli(event.startTimeMillis)
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+
+                            EventCard(
+                                event = event,
+                                isSelected = isSelected,
+                                onToggle = { onEventToggled(event.id) },
+                                dateFormatter = dateFormatter,
+                                eventDate = eventDate
+                            )
+                        }
                     }
                 }
             }
@@ -247,95 +267,90 @@ private fun EventCard(
     dateFormatter: DateTimeFormatter,
     eventDate: LocalDate
 ) {
-    val borderStroke: BorderStroke = if (isSelected) {
-        BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
-    } else {
-        BorderStroke(0.dp, MaterialTheme.colorScheme.primary)
-    }
-
-    OutlinedCard(
-        onClick = onToggle,
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        border = borderStroke,
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                color = if (isSelected) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+                shape = RoundedCornerShape(14.dp),
+            )
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onToggle)
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(
-                            color = if (isSelected) {
-                                MaterialTheme.colorScheme.primaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.surfaceVariant
-                            },
-                            shape = RoundedCornerShape(8.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Event,
-                        contentDescription = null,
-                        tint = if (isSelected) {
-                            MaterialTheme.colorScheme.primary
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                         } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        modifier = Modifier.size(24.dp)
+                            MaterialTheme.colorScheme.surface
+                        }
                     )
-                }
-
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                        shape = RoundedCornerShape(8.dp)
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Event,
+                    contentDescription = null,
+                    tint = if (isSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    text = event.title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = event.title,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        text = eventDate.format(dateFormatter),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
                     )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = eventDate.format(dateFormatter),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
-                        )
-                        Text(
-                            text = event.formattedTime,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (isSelected) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
-                            }
-                        )
-                    }
+                    Text(
+                        text = event.formattedTime,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
+                        }
+                    )
                 }
             }
-
-            Checkbox(
-                checked = isSelected,
-                onCheckedChange = { onToggle() }
-            )
         }
+        Checkbox(
+            checked = isSelected,
+            onCheckedChange = { onToggle() }
+        )
     }
 }
 
@@ -422,11 +437,46 @@ private fun EmptyEventsContent() {
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
-fun SessionCalendarScreenPreview(){
-    SessionCalendarScreen(
-        navController = rememberNavController(),
-        sessionId = "1"
-    )
+private fun SessionCalendarPreviewLight() {
+    MONKeyTheme(darkTheme = false) {
+        SessionCalendarContent(
+            uiState = SessionCalendarUiState(
+                isLoading = false,
+                events = listOf(
+                    CalendarEventUi(1L, "Meeting A", 1000L, 2000L, formattedTime = "09:00 - 10:00"),
+                    CalendarEventUi(2L, "Meeting B", 3000L, 4000L, formattedTime = "14:00 - 15:00")
+                ),
+                selectedEventId = 1L,
+                hasPermission = true
+            ),
+            onEventToggled = { },
+            onRequestPermission = { },
+            onBackClick = { },
+            onRefresh = { }
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SessionCalendarPreviewDark() {
+    MONKeyTheme(darkTheme = true) {
+        SessionCalendarContent(
+            uiState = SessionCalendarUiState(
+                isLoading = false,
+                events = listOf(
+                    CalendarEventUi(1L, "Meeting A", 1000L, 2000L, formattedTime = "09:00 - 10:00"),
+                    CalendarEventUi(2L, "Meeting B", 3000L, 4000L, formattedTime = "14:00 - 15:00")
+                ),
+                selectedEventId = null,
+                hasPermission = true
+            ),
+            onEventToggled = { },
+            onRequestPermission = { },
+            onBackClick = { },
+            onRefresh = { }
+        )
+    }
 }
