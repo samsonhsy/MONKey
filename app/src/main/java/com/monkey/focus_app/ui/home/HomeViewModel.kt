@@ -20,7 +20,6 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.Instant
 
-// UI friendly data for session item in Home screen
 data class HomeSessionItemUi(
     val id: Int,
     val title: String,

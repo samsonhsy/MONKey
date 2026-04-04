@@ -109,11 +109,15 @@ fun HomeScreen(navController: NavController) {
 }
 @Composable
 fun HomeScreenContent(
+    modifier: Modifier = Modifier,
     sessions: List<HomeSessionItemUi>,
     weeklyFocusText: String,
-    permissionStatus: PermissionChecklistStatus = PermissionChecklistStatus(false, false, false),
+    permissionStatus: PermissionChecklistStatus = PermissionChecklistStatus(
+        accessibilityEnabled = false,
+        exactAlarmAllowed = false,
+        notificationsAllowed = false
+    ),
     showFirstSetupDialog: Boolean = false,
-    modifier: Modifier = Modifier,
     onStartFocusClick: () -> Unit = {},
     onViewAllClick: () -> Unit = {},
     onPermissionWarningClick: () -> Unit = {},
@@ -160,9 +164,9 @@ fun HomeScreenContent(
                     if (session.isActive) {
                         val intent = Intent(context, WarningActivity::class.java).apply {
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                            putExtra(com.monkey.focus_app.service.focus.FocusActions.EXTRA_SESSION_ID, session.id)
-                            putExtra(com.monkey.focus_app.service.focus.FocusActions.EXTRA_BLOCKED_PACKAGE, "")
-                            putExtra(com.monkey.focus_app.service.focus.FocusActions.EXTRA_UNLOCK_LEVEL, "") // Note: ideally we'd pass real values if needed
+                            putExtra(FocusActions.EXTRA_SESSION_ID, session.id)
+                            putExtra(FocusActions.EXTRA_BLOCKED_PACKAGE, "")
+                            putExtra(FocusActions.EXTRA_UNLOCK_LEVEL, "")
                         }
                         context.startActivity(intent)
                     }
@@ -339,7 +343,7 @@ private fun SessionCard(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column() {
+        Column{
             Text(
                 text = session.title,
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium),
