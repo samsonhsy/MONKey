@@ -1,10 +1,12 @@
 package com.monkey.focus_app.ui.settings
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.os.Build
 import android.widget.Space
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -46,6 +48,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.monkey.focus_app.ui.theme.MONKeyTheme
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun SettingsScreen() {
     val context = LocalContext.current
@@ -100,7 +103,7 @@ fun SettingsScreen() {
         onNotificationsClick = settingsViewModel::onNotificationsClicked,
     )
 }
-
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun SettingsScreenContent(
     uiState: SettingsUiState,
@@ -113,12 +116,11 @@ fun SettingsScreenContent(
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
-                .padding(innerPadding)
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             item {
-                Column(modifier = Modifier.padding(top = 24.dp, bottom = 8.dp)) {
+                Column(modifier = Modifier.padding(top = 30.dp, bottom = 8.dp)) {
                     Text(
                         text = "Settings",
                         style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
