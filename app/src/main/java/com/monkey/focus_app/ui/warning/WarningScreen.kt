@@ -42,6 +42,7 @@ import androidx.compose.runtime.traceEventEnd
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -370,6 +371,7 @@ fun Novice(
 ) {
     val scrollState = rememberScrollState()
     val textMeasurer = rememberTextMeasurer()
+    val context = LocalContext.current
     
     val textStyle = TextStyle(
         fontSize = MaterialTheme.typography.headlineSmall.fontSize,
@@ -478,7 +480,13 @@ fun Novice(
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
-                onClick = onSubmit
+                onClick = {
+                    if (typedText == unlockPhrase) {
+                        onSubmit()
+                    } else {
+                        Toast.makeText(context, "The phrase to unlock is incorrect/incomplete, try again.", Toast.LENGTH_SHORT).show()
+                    }
+                }
             ) {
                 Text(
                     text = "Enter",
