@@ -23,6 +23,7 @@ data class WarningUiState(
     val unlockLevel: String = "NOVICE",
     val currentStep: Int = 0,
     val typedText: String = "",
+    val characterValidation: List<Boolean> = emptyList(),
     val shakeCount: Int = 0,
     val shakeProgress: Float = 0f
 )
@@ -63,10 +64,21 @@ class WarningViewModel(
     private val _effect = MutableSharedFlow<WarningEffect>()
     val effect: SharedFlow<WarningEffect> = _effect.asSharedFlow()
 
-    val unlockPhrase = "I have decided not to focus and be addicted to my cell phone again."
+    val unlockPhrase = getRandomString(500)
 
     companion object {
         const val SHAKE_TARGET = 100
+    }
+
+    // Source - https://stackoverflow.com/a/54400933
+    // Posted by WhiteAngel, modified by community. See post 'Timeline' for change history
+    // Retrieved 2026-04-05, License - CC BY-SA 4.0
+
+    fun getRandomString(length: Int): String {
+        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        return (1..length)
+            .map { allowedChars.random() }
+            .joinToString("")
     }
 
     fun onNewBlockedApp(sessionId: Int, blockedPackage: String, unlockLevel: String) {
@@ -86,14 +98,28 @@ class WarningViewModel(
     }
 
     fun onUnlockClicked() {
-        _state.update { it.copy(currentStep = 0, typedText = "", shakeCount = 0, shakeProgress = 0f) }
+        _state.update {
+            it.copy(
+                currentStep = 0,
+                typedText = "",
+                shakeCount = 0,
+                shakeProgress = 0f
+            )
+        }
         viewModelScope.launch {
             _effect.emit(WarningEffect.NavigateToUnlock)
         }
     }
 
     fun onTypedTextChanged(text: String) {
-        _state.update { it.copy(typedText = text) }
+        val validation = text.mapIndexed { index, char ->
+            if (index < unlockPhrase.length) {
+                char == unlockPhrase[index]
+            } else {
+                false
+            }
+        }
+        _state.update { it.copy(typedText = text, characterValidation = validation) }
     }
 
     fun onSubmitUnlock() {
@@ -118,7 +144,14 @@ class WarningViewModel(
     }
 
     fun onCancelUnlock() {
-        _state.update { it.copy(currentStep = 0, typedText = "", shakeCount = 0, shakeProgress = 0f) }
+        _state.update {
+            it.copy(
+                currentStep = 0,
+                typedText = "",
+                shakeCount = 0,
+                shakeProgress = 0f
+            )
+        }
     }
 
     private fun onUnlockSuccess() {
@@ -139,5 +172,6 @@ class WarningViewModel(
 
             _effect.emit(WarningEffect.NavigateToDeviceHome)
         }
+
     }
 }

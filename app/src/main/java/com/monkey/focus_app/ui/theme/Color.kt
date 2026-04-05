@@ -4,10 +4,13 @@ import androidx.compose.ui.graphics.Color
 
 // Brand Colors
 val BrandOrange = Color(0xFFFE9F4C)
+val WrongOrange = Color(0xFFFF6B6B)
 
 // Green Colors
 val SecondaryGreen = Color(0xFF74de94)
 val SecondaryDarkGreen = Color(0xFF01613f)
+
+val Gray = Color(0xFF888888)
 
 // Dark Theme Colors
 val DarkBackground = Color(0xFF121212)
