@@ -2,6 +2,7 @@ package com.monkey.focus_app.ui.session
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -332,7 +333,10 @@ private fun UpcomingSessionCard(
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 // Tags Row
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     session.tags.forEachIndexed { index, tag ->
                         val hex = session.tagColors.getOrNull(index)
                         val tagColor = parseHexColorOrNull(hex) ?: MaterialTheme.colorScheme.primary
@@ -487,8 +491,8 @@ private val previewUpcoming = listOf(
         id = 1,
         title = "Morning Meditation",
         time = "07:00 - 09:00",
-        tags = listOf("#meditation", "#mindful"),
-        tagColors = listOf("#5DD39E", "#38C8C2"),
+        tags = listOf("#meditation", "#mindful", "#meditation", "#mindful", "#meditation", "#mindful"),
+        tagColors = listOf("#5DD39E", "#38C8C2", "#5DD39E", "#38C8C2", "#5DD39E", "#38C8C2"),
         recurrence = "Daily",
         date = "Oct 12, 2023",
     ),
