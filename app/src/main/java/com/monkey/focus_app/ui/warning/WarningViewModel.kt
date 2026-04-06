@@ -64,7 +64,7 @@ class WarningViewModel(
     private val _effect = MutableSharedFlow<WarningEffect>()
     val effect: SharedFlow<WarningEffect> = _effect.asSharedFlow()
 
-    val unlockPhrase = getRandomString(500)
+    val unlockPhrase = getUnlockPhrase("I have decided to be addicted to my phone again")
 
     companion object {
         const val SHAKE_TARGET = 100
@@ -75,10 +75,14 @@ class WarningViewModel(
     // Retrieved 2026-04-05, License - CC BY-SA 4.0
 
     fun getRandomString(length: Int): String {
-        val allowedChars = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+        val allowedChars = ('a'..'z') + ('0'..'9')
         return (1..length)
             .map { allowedChars.random() }
             .joinToString("")
+    }
+
+    fun getUnlockPhrase(phrase: String): String{
+        return phrase.uppercase().replace(" ", " " + getRandomString(3) + " ")
     }
 
     fun onNewBlockedApp(sessionId: Int, blockedPackage: String, unlockLevel: String) {
