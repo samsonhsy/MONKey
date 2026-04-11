@@ -70,7 +70,19 @@ class SessionEditViewModel(
         _uiState.value = _uiState.value.copy(isCreateMode = isCreateMode)
         observeTags()
         if (isCreateMode) {
-            _uiState.value = _uiState.value.copy(isLoading = false)
+            val zone = ZoneId.systemDefault()
+            val defaultStart = LocalDateTime.now(zone).plusMinutes(1)
+            val defaultDateMillis = defaultStart.toLocalDate()
+                .atStartOfDay(zone)
+                .toInstant()
+                .toEpochMilli()
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                selectedDateMillis = defaultDateMillis,
+                selectedHour = defaultStart.hour,
+                selectedMinute = defaultStart.minute
+            )
         } else {
             loadExistingSession()
         }
