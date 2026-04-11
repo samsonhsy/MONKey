@@ -137,7 +137,7 @@ import kotlin.math.sin
 
 @Composable
 fun WarningEntryScreen(
-    blockedPackage: String,
+    blockedAppName: String,
     unlockLevel: String,
     onBackToFocus: () -> Unit,
     onUnlock: () -> Unit
@@ -158,8 +158,18 @@ fun WarningEntryScreen(
                     .fillMaxWidth()
                     .height(250.dp)
             )
+            if (blockedAppName.isNotEmpty()){
+                Text(
+                    text = ("Blocked:\n ${blockedAppName.uppercase()}"),
+                    modifier = Modifier.padding(50.dp, 0.dp),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = ("BLOCKED: $blockedPackage\nMode: $unlockLevel").uppercase(),
+                text = ("Mode:\n ${unlockLevel.uppercase()}"),
                 modifier = Modifier.padding(50.dp, 0.dp),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.headlineSmall
@@ -534,7 +544,8 @@ fun Bhikkhu(
                 modifier = Modifier.weight(0.3f)
             )
             Text(
-                text = "Shake your cell phone for 100 times to unlock",
+//                text = "Shake your cell phone for 100 times to unlock",
+                text = "Shake your cell phone for 25 times to unlock",
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.titleLarge
             )
@@ -552,7 +563,8 @@ fun Bhikkhu(
                 modifier = Modifier.size(30.dp)
             )
             Text(
-                text = if (shakeCount < 100) "${shakeCount}/100" else "Done!",
+//                text = if (shakeCount < 100) "${shakeCount}/100" else "Done!",
+                text = if (shakeCount < 25) "${shakeCount}/25" else "Done!",
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.titleMedium,
                 color = BrandOrange
@@ -589,7 +601,7 @@ fun Bhikkhu(
 fun WarningEntryScreenPreviewLight() {
     MONKeyTheme {
         WarningEntryScreen(
-            blockedPackage = "",
+            blockedAppName = "Instagram",
             unlockLevel = "NOVICE",
             onBackToFocus = {},
             onUnlock = {},
@@ -602,7 +614,7 @@ fun WarningEntryScreenPreviewLight() {
 fun WarningEntryScreenPreviewDark() {
     MONKeyTheme(darkTheme = true) {
         WarningEntryScreen(
-            blockedPackage = "",
+            blockedAppName = "",
             unlockLevel = "NOVICE",
             onBackToFocus = {},
             onUnlock = {},

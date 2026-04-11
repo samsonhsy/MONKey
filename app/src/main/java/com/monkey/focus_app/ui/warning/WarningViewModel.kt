@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.content.pm.PackageManager
 import com.monkey.focus_app.data.AppRepository
 import com.monkey.focus_app.data.db.DatabaseBuilder
 import com.monkey.focus_app.service.focus.FocusActions
@@ -19,7 +20,7 @@ import kotlinx.coroutines.launch
 
 data class WarningUiState(
     val sessionId: Int = -1,
-    val blockedPackage: String = "",
+    val blockedAppName: String = "",
     val unlockLevel: String = "NOVICE",
     val currentStep: Int = 0,
     val typedText: String = "",
@@ -55,7 +56,7 @@ class WarningViewModel(
     private val _state = MutableStateFlow(
         WarningUiState(
             sessionId = sessionId,
-            blockedPackage = blockedPackage,
+            blockedAppName = resolveBlockedAppName(blockedPackage),
             unlockLevel = unlockLevel
         )
     )
@@ -67,7 +68,8 @@ class WarningViewModel(
     val unlockPhrase = getUnlockPhrase("I have decided to be addicted to my phone again")
 
     companion object {
-        const val SHAKE_TARGET = 100
+//        const val SHAKE_TARGET = 100
+        const val SHAKE_TARGET = 25
     }
 
     // Source - https://stackoverflow.com/a/54400933
@@ -89,9 +91,20 @@ class WarningViewModel(
         _state.update {
             it.copy(
                 sessionId = sessionId,
-                blockedPackage = blockedPackage,
+                blockedAppName = resolveBlockedAppName(blockedPackage),
                 unlockLevel = unlockLevel
             )
+        }
+    }
+
+    private fun resolveBlockedAppName(packageName: String): String {
+        if (packageName.isBlank()) return ""
+        return try {
+            val pm = appContext.packageManager
+            val appInfo = pm.getApplicationInfo(packageName, 0)
+            pm.getApplicationLabel(appInfo).toString()
+        } catch (_: PackageManager.NameNotFoundException) {
+            packageName
         }
     }
 

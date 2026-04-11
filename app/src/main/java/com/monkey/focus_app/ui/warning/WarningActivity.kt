@@ -98,7 +98,7 @@ class WarningActivity : ComponentActivity() {
                     ) {
                         composable("warning_entry") {
                             WarningEntryScreen(
-                                blockedPackage = state.blockedPackage,
+                                blockedAppName = state.blockedAppName,
                                 unlockLevel = state.unlockLevel,
                                 onBackToFocus = viewModel::onBackToFocusClicked,
                                 onUnlock = viewModel::onUnlockClicked
