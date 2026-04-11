@@ -26,6 +26,7 @@ data class HomeSessionItemUi(
     val timeslot: String,
     val duration: String,
     val recurrence: String,
+    val unlockLevel: String,
     val isActive: Boolean
 )
 
@@ -155,6 +156,7 @@ class HomeViewModel(
             timeslot = "$start - $end",
             duration = "$durationMin min",
             recurrence = recurrenceLabel,
+            unlockLevel = unlockKeyLevel.uppercase(),
             isActive = isActive
         )
     }

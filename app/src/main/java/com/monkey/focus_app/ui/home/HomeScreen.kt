@@ -166,7 +166,7 @@ fun HomeScreenContent(
                             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                             putExtra(FocusActions.EXTRA_SESSION_ID, session.id)
                             putExtra(FocusActions.EXTRA_BLOCKED_PACKAGE, "")
-                            putExtra(FocusActions.EXTRA_UNLOCK_LEVEL, "")
+                            putExtra(FocusActions.EXTRA_UNLOCK_LEVEL, session.unlockLevel)
                         }
                         context.startActivity(intent)
                     }
@@ -386,8 +386,8 @@ fun HomeScreenPreviewDark() {
     MONKeyTheme(darkTheme = true) {
         HomeScreenContent(
             sessions = listOf(
-                HomeSessionItemUi(1, "CSCI lecture", "09:00 - 10:00", "120 min", "Once", true),
-                HomeSessionItemUi(2, "Math Study", "10:30 - 11:30", "60 min", "Weekly", false)
+                HomeSessionItemUi(1, "CSCI lecture", "09:00 - 10:00", "120 min", "Once", "NOVICE", true),
+                HomeSessionItemUi(2, "Math Study", "10:30 - 11:30", "60 min", "Weekly", "NOVICE", false)
             ),
             weeklyFocusText = "4h 20m"
         )
@@ -400,8 +400,8 @@ fun HomeScreenPreviewLight() {
     MONKeyTheme(darkTheme = false) {
         HomeScreenContent(
             sessions = listOf(
-                HomeSessionItemUi(1, "CSCI lecture", "09:00 - 10:00", "120 min", "ONCE", true),
-                HomeSessionItemUi(2, "Math Study", "10:30 - 11:30", "60 min", "WEEKLY", false)
+                HomeSessionItemUi(1, "CSCI lecture", "09:00 - 10:00", "120 min", "ONCE", "NOVICE", true),
+                HomeSessionItemUi(2, "Math Study", "10:30 - 11:30", "60 min", "WEEKLY", "NOVICE", false)
             ),
             weeklyFocusText = "4h 20m"
         )
