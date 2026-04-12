@@ -4,10 +4,15 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.annotation.SuppressLint
 import android.app.NotificationManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import com.monkey.focus_app.data.AppRepository
 import com.monkey.focus_app.data.db.DatabaseBuilder
+import com.monkey.focus_app.service.focus.FocusActions
 import com.monkey.focus_app.service.focus.FocusNotificationFactory
 import com.monkey.focus_app.service.focus.FocusRuntimeStore
 import kotlinx.coroutines.CoroutineScope
@@ -39,8 +44,33 @@ class MonkeyAccessibilityService : AccessibilityService() {
     @Volatile private var fallbackUnlockLevel: String = "NOVICE"
     @Volatile private var fallbackBlockedPackages: Set<String> = emptySet()
 
+    private val sessionStopReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == FocusActions.ACTION_STOP_SESSION) {
+                Log.i(tag, "Session stop received via broadcast")
+                onSessionStopped()
+            }
+        }
+    }
+
+    private fun onSessionStopped() {
+        fallbackRunning = false
+        fallbackSessionId = -1
+        fallbackUnlockLevel = "NOVICE"
+        fallbackBlockedPackages = emptySet()
+        FocusRuntimeStore.setStopped()
+        Log.i(tag, "Session stopped - blocking disabled")
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
+
+        registerReceiver(
+            sessionStopReceiver,
+            IntentFilter(FocusActions.ACTION_STOP_SESSION),
+            RECEIVER_NOT_EXPORTED
+        )
+
         val database = DatabaseBuilder.getInstance(applicationContext)
         repository = AppRepository(
             focusLogDao = database.focusLogDao(),
@@ -76,12 +106,8 @@ class MonkeyAccessibilityService : AccessibilityService() {
                 runCatching {
                     val active = repository.getActiveSessionNow()
                     if (active == null) {
-                        fallbackRunning = false
-                        fallbackSessionId = -1
-                        fallbackUnlockLevel = "NOVICE"
-                        fallbackBlockedPackages = emptySet()
-                        if (FocusRuntimeStore.state.value.isRunning) {
-                            FocusRuntimeStore.setStopped()
+                        if (fallbackRunning) {
+                            onSessionStopped()
                         }
                     } else {
                         val allTags = repository.getAllTagSnapshot()
@@ -159,24 +185,22 @@ class MonkeyAccessibilityService : AccessibilityService() {
         val sessionId = runtime.sessionId ?: fallbackSessionId
         val unlockLevel = runtime.unlockLevel ?: fallbackUnlockLevel
 
-        // 1. Kick user to Home
         performGlobalAction(GLOBAL_ACTION_HOME)
 
-        // 2. Show high-priority notification
         val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         nm.notify(
             3005 + sessionId,
             FocusNotificationFactory.buildBlockedAlert(this, sessionId, pkg, unlockLevel)
         )
-        
+
         FocusRuntimeStore.markWarningShown(now)
         Log.d(tag, "Blocked app $pkg, forced home, and sent notification.")
     }
 
-
-
     private fun resolveForegroundPackage(): String {
-        val fromRoot = rootInActiveWindow?.packageName?.toString()?.trim().orEmpty()
+        val rootNode = rootInActiveWindow
+        val fromRoot = rootNode?.packageName?.toString()?.trim().orEmpty()
+        Log.v(tag, "rootInActiveWindow: pkg=$fromRoot, node=$rootNode")
         if (fromRoot.isNotEmpty()) return fromRoot
 
         val fromWindows = windows
@@ -186,11 +210,16 @@ class MonkeyAccessibilityService : AccessibilityService() {
             ?.toString()
             ?.trim()
             .orEmpty()
+        Log.v(tag, "windows[0] pkg: $fromWindows")
 
         return fromWindows
     }
 
     override fun onDestroy() {
+        try {
+            unregisterReceiver(sessionStopReceiver)
+        } catch (e: Exception) {
+        }
         monitorJob?.cancel()
         runtimeRefreshJob?.cancel()
         serviceScope.cancel()
