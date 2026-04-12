@@ -128,7 +128,7 @@ class SessionCalendarViewModel(
             .toEpochMilli()
 
         val projection = arrayOf(
-            CalendarContract.Instances.EVENT_ID,
+            CalendarContract.Instances._ID,
             CalendarContract.Instances.TITLE,
             CalendarContract.Instances.BEGIN,
             CalendarContract.Instances.END,
@@ -152,7 +152,7 @@ class SessionCalendarViewModel(
             null,
             sortOrder
         )?.use { cursor ->
-            val idIndex = cursor.getColumnIndex(CalendarContract.Instances.EVENT_ID)
+            val idIndex = cursor.getColumnIndex(CalendarContract.Instances._ID)
             val titleIndex = cursor.getColumnIndex(CalendarContract.Instances.TITLE)
             val startIndex = cursor.getColumnIndex(CalendarContract.Instances.BEGIN)
             val endIndex = cursor.getColumnIndex(CalendarContract.Instances.END)
