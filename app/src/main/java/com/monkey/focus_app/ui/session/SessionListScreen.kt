@@ -128,7 +128,8 @@ fun SessionListContent(
             // --- Header ---
             TopBarSection(
                 isDeleteMode = isDeleteMode,
-                onToggleDeleteMode = onToggleDeleteMode
+                selectedTabIndex = selectedTabIndex,
+                onToggleDeleteMode = onToggleDeleteMode,
             )
             // --- Custom Tab Row ---
             SessionTabRow(
@@ -181,7 +182,7 @@ fun SessionListContent(
 
 
 @Composable
-private fun TopBarSection(isDeleteMode: Boolean, onToggleDeleteMode: () -> Unit) {
+private fun TopBarSection(isDeleteMode: Boolean, selectedTabIndex: Int, onToggleDeleteMode: () -> Unit) {
     Spacer(modifier = Modifier.height(24.dp))
     Row(
         modifier = Modifier
@@ -195,32 +196,34 @@ private fun TopBarSection(isDeleteMode: Boolean, onToggleDeleteMode: () -> Unit)
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onBackground
         )
-
-        if (!isDeleteMode) {
-            IconButton(
-                onClick = onToggleDeleteMode,
-                modifier = Modifier.clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.errorContainer)
-                .size(40.dp)) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete Selected",
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
-        }else{
-            IconButton(
-                onClick = onToggleDeleteMode,
-                modifier = Modifier.clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .size(40.dp)) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Delete Selected",
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
+        if (selectedTabIndex == 0){
+            if (!isDeleteMode) {
+                IconButton(
+                    onClick = onToggleDeleteMode,
+                    modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.errorContainer)
+                        .size(40.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete Selected",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }else{
+                IconButton(
+                    onClick = onToggleDeleteMode,
+                    modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.primary)
+                        .size(40.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Delete Selected",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         }
+
     }
 }
 @Composable
