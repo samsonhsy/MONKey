@@ -17,10 +17,10 @@ interface SessionDao {
     @Query("SELECT * FROM session_table WHERE session_id = :id")
     suspend fun getSessionsById(id: Int): Session?
 
-    @Query("SELECT * FROM session_table WHERE is_active = 1")
+    @Query("SELECT * FROM session_table WHERE is_active = 1 ORDER BY session_id DESC")
     fun getActiveSession(): Flow<Session?>
 
-    @Query("SELECT * FROM session_table WHERE is_active = 1 LIMIT 1")
+    @Query("SELECT * FROM session_table WHERE is_active = 1 ORDER BY session_id DESC LIMIT 1")
     suspend fun getActiveSessionNow(): Session?
 
     @Query("SELECT * FROM session_table WHERE end_datetime > :nowMillis")
