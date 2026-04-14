@@ -104,8 +104,9 @@ class MonkeyAccessibilityService : AccessibilityService() {
         runtimeRefreshJob = serviceScope.launch(Dispatchers.IO) {
             while (isActive) {
                 runCatching {
+                    val now = System.currentTimeMillis()
                     val active = repository.getActiveSessionNow()
-                    if (active == null) {
+                    if (active == null || active.endDateTime <= now) {
                         if (fallbackRunning) {
                             onSessionStopped()
                         }

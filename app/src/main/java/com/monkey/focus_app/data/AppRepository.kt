@@ -50,8 +50,8 @@ suspend fun getAllReward() = rewardDao.getAll()
 
     suspend fun getAllSessionById(id: Int) = sessionDao.getSessionsById(id)
 
-    fun getAllActiveSession() = sessionDao.getActiveSession()
-    suspend fun getActiveSessionNow() = sessionDao.getActiveSessionNow()
+    fun getAllActiveSession(nowMillis: Long) = sessionDao.getActiveSession(nowMillis)
+    suspend fun getActiveSessionNow() = sessionDao.getActiveSessionNow(System.currentTimeMillis())
     suspend fun getUpcomingOrOngoingSessions(nowMillis: Long) = sessionDao.getUpcomingOrOngoingSessions(nowMillis)
 
     suspend fun insertAllSession(vararg session: Session) = sessionDao.insertAll(*session)
