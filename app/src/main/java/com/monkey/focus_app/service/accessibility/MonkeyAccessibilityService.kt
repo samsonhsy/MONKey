@@ -201,7 +201,6 @@ class MonkeyAccessibilityService : AccessibilityService() {
     private fun resolveForegroundPackage(): String {
         val rootNode = rootInActiveWindow
         val fromRoot = rootNode?.packageName?.toString()?.trim().orEmpty()
-        Log.v(tag, "rootInActiveWindow: pkg=$fromRoot, node=$rootNode")
         if (fromRoot.isNotEmpty()) return fromRoot
 
         val fromWindows = windows
