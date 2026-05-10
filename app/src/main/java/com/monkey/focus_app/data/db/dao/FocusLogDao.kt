@@ -6,9 +6,13 @@ import androidx.room.Insert
 import androidx.room.Query
 import com.monkey.focus_app.data.db.entity.FocusLog
 import com.monkey.focus_app.data.db.entity.Session
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FocusLogDao {
+    @Query("SELECT * FROM focus_log")
+    fun observeAll(): Flow<List<FocusLog>>
+
     @Query("SELECT * FROM focus_log")
     suspend fun getAll(): List<FocusLog>
 

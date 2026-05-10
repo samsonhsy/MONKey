@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MONKey</string>
+    <string name="accessibility_service_description">MONKey listens the blocked apps during focus sessions.</string>
 </resources>

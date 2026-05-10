@@ -1,9 +1,11 @@
 package com.monkey.focus_app.ui.session
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.monkey.focus_app.data.AppRepository
 import com.monkey.focus_app.data.db.entity.Session
+import com.monkey.focus_app.service.scheduler.AlarmScheduler
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -35,6 +37,7 @@ data class SessionEditUiState(
     val selectedHour: Int = 9,
     val selectedMinute: Int = 0,
     val durationMinutes: Int = 30,
+    val endTimeMillis: Long? = null,
     val selectedRecurrence: String = "ONCE",
     val selectedUnlockLevel: String = "NOVICE",
     val reminderIndex: Float = 1f,
@@ -44,14 +47,17 @@ data class SessionEditUiState(
 
 sealed interface SessionEditEffect {
     data object SaveSuccess : SessionEditEffect
+    data object NavigateToTagEdit : SessionEditEffect
     data class ShowMessage(val text: String) : SessionEditEffect
+    data object NavigateToCalendar : SessionEditEffect
 }
 
 class SessionEditViewModel(
     private val repository: AppRepository,
-    private val sessionIdArg: String
+    private val sessionIdArg: String,
+    appContext: Context
 ) : ViewModel() {
-
+    private  val alarmScheduler = AlarmScheduler(appContext)
     private val _uiState = MutableStateFlow(SessionEditUiState())
     val uiState: StateFlow<SessionEditUiState> = _uiState.asStateFlow()
 
@@ -64,7 +70,19 @@ class SessionEditViewModel(
         _uiState.value = _uiState.value.copy(isCreateMode = isCreateMode)
         observeTags()
         if (isCreateMode) {
-            _uiState.value = _uiState.value.copy(isLoading = false)
+            val zone = ZoneId.systemDefault()
+            val defaultStart = LocalDateTime.now(zone).plusMinutes(1)
+            val defaultDateMillis = defaultStart.toLocalDate()
+                .atStartOfDay(zone)
+                .toInstant()
+                .toEpochMilli()
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                selectedDateMillis = defaultDateMillis,
+                selectedHour = defaultStart.hour,
+                selectedMinute = defaultStart.minute
+            )
         } else {
             loadExistingSession()
         }
@@ -122,6 +140,8 @@ class SessionEditViewModel(
                 .toInstant()
                 .toEpochMilli()
 
+            val endTimeMillis = session.endDateTime
+
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 isCreateMode = false,
@@ -132,6 +152,7 @@ class SessionEditViewModel(
                 selectedHour = localDateTime.hour,
                 selectedMinute = localDateTime.minute,
                 durationMinutes = session.durationMin,
+                endTimeMillis = endTimeMillis,
                 selectedRecurrence = session.recurrence.uppercase(),
                 selectedUnlockLevel = session.unlockKeyLevel.uppercase(),
                 reminderIndex = reminderOffsetToIndex(session.reminderOffsetMinutes),
@@ -150,6 +171,11 @@ class SessionEditViewModel(
         _uiState.value = _uiState.value.copy(selectedTagIds = updated)
     }
 
+    fun onEmptyTagClicked(){
+        viewModelScope.launch {
+            _effect.emit(SessionEditEffect.NavigateToTagEdit)
+        }
+    }
     fun onDateChanged(millis: Long?) {
         if (millis == null) return
         val zone = ZoneId.systemDefault()
@@ -160,7 +186,10 @@ class SessionEditViewModel(
             }
             return
         }
-        _uiState.value = _uiState.value.copy(selectedDateMillis = millis)
+        _uiState.value = _uiState.value.copy(
+            selectedDateMillis = millis,
+            endTimeMillis = null
+        )
     }
 
     fun onTimeChanged(hour: Int, minute: Int) {
@@ -172,11 +201,19 @@ class SessionEditViewModel(
             }
             return
         }
-        _uiState.value = _uiState.value.copy(selectedHour = hour, selectedMinute = minute)
+        _uiState.value = _uiState.value.copy(
+            selectedHour = hour,
+            selectedMinute = minute,
+            endTimeMillis = null
+        )
     }
 
     fun onDurationChanged(value: Int) {
-        _uiState.value = _uiState.value.copy(durationMinutes = value.coerceIn(5, 240))
+        val currentDuration = _uiState.value.durationMinutes
+        _uiState.value = _uiState.value.copy(
+            durationMinutes = value.coerceIn(5, 240),
+            endTimeMillis = if (currentDuration != value) null else _uiState.value.endTimeMillis
+        )
     }
 
     fun onRecurrenceChanged(value: String) {
@@ -228,14 +265,18 @@ class SessionEditViewModel(
                     return@launch
                 }
 
-                val endMillis = startMillis + state.durationMinutes * 60_000L
+                val (endMillis, finalDuration) = if (state.endTimeMillis != null && state.endTimeMillis > startMillis) {
+                    state.endTimeMillis to ((state.endTimeMillis - startMillis) / 60_000L).toInt()
+                } else {
+                    startMillis + state.durationMinutes * 60_000L to state.durationMinutes
+                }
 
                 val session = Session(
                     sessionID = state.sessionId ?: 0,
                     sessionName = state.title.trim(),
                     startDateTime = startMillis,
                     endDateTime = endMillis,
-                    durationMin = state.durationMinutes,
+                    durationMin = finalDuration,
                     recurrence = state.selectedRecurrence,
                     tagIds = state.selectedTagIds.toList().sorted(),
                     unlockKeyLevel = state.selectedUnlockLevel,
@@ -245,9 +286,15 @@ class SessionEditViewModel(
                 )
 
                 if (state.isCreateMode) {
-                    repository.insertAllSession(session)
+                    val insertedIds = repository.insertAllSession(session)
+                    val newId = insertedIds.firstOrNull()?.toInt()?:throw IllegalStateException("Failed to insert session")
+                    val savedSession = session.copy(sessionID = newId)
+                    alarmScheduler.scheduleSession(savedSession)
                 } else {
+                    val existingId = state.sessionId ?: throw IllegalStateException("Missing session id for update")
+                    alarmScheduler.cancelSession(existingId)
                     repository.updateAllSession(session)
+                    alarmScheduler.scheduleSession(session)
                 }
 
                 _uiState.value = _uiState.value.copy(isSaving = false)
@@ -256,6 +303,46 @@ class SessionEditViewModel(
                 _uiState.value = _uiState.value.copy(isSaving = false)
                 _effect.emit(SessionEditEffect.ShowMessage(throwable.message ?: "Failed to save session"))
             }
+        }
+    }
+
+    fun onImportFromCalendarClicked(){
+        viewModelScope.launch {
+            _effect.emit(SessionEditEffect.NavigateToCalendar)
+        }
+    }
+
+    fun onCalendarEventImported(
+        title: String,
+        startTimeMillis: Long,
+        endTimeMillis: Long
+    ) {
+        val startDateTime = Instant.ofEpochMilli(startTimeMillis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime()
+
+        val endDateTime = Instant.ofEpochMilli(endTimeMillis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime()
+
+        val dateMillis = startDateTime.toLocalDate()
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        val durationMinutes = java.time.Duration.between(startDateTime, endDateTime).toMinutes().toInt()
+
+        _uiState.value = _uiState.value.copy(
+            title = title,
+            selectedDateMillis = dateMillis,
+            selectedHour = startDateTime.hour,
+            selectedMinute = startDateTime.minute,
+            durationMinutes = if (durationMinutes > 0) durationMinutes else _uiState.value.durationMinutes,
+            endTimeMillis = endTimeMillis
+        )
+
+        viewModelScope.launch {
+            _effect.emit(SessionEditEffect.ShowMessage("Event imported: $title"))
         }
     }
 

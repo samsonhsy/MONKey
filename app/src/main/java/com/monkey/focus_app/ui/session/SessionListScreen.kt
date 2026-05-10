@@ -2,6 +2,7 @@ package com.monkey.focus_app.ui.session
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -43,7 +44,8 @@ fun SessionListScreen(navController: NavController) {
             userStatsDao = database.userStatsDao()
         )
     }
-    val factory = remember(repository) { SessionListViewModelFactory(repository) }
+    val appContext = context.applicationContext
+    val factory = remember(repository, appContext) { SessionListViewModelFactory(repository, appContext) }
     val sessionListViewModel: SessionListViewModel = viewModel(factory = factory)
     val uiState by sessionListViewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -126,7 +128,8 @@ fun SessionListContent(
             // --- Header ---
             TopBarSection(
                 isDeleteMode = isDeleteMode,
-                onToggleDeleteMode = onToggleDeleteMode
+                selectedTabIndex = selectedTabIndex,
+                onToggleDeleteMode = onToggleDeleteMode,
             )
             // --- Custom Tab Row ---
             SessionTabRow(
@@ -179,11 +182,12 @@ fun SessionListContent(
 
 
 @Composable
-private fun TopBarSection(isDeleteMode: Boolean, onToggleDeleteMode: () -> Unit) {
+private fun TopBarSection(isDeleteMode: Boolean, selectedTabIndex: Int, onToggleDeleteMode: () -> Unit) {
+    Spacer(modifier = Modifier.height(24.dp))
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 24.dp),
+            .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -192,32 +196,34 @@ private fun TopBarSection(isDeleteMode: Boolean, onToggleDeleteMode: () -> Unit)
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onBackground
         )
-
-        if (!isDeleteMode) {
-            IconButton(
-                onClick = onToggleDeleteMode,
-                modifier = Modifier.clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.errorContainer)
-                .size(40.dp)) {
-                Icon(
-                    imageVector = Icons.Default.Delete,
-                    contentDescription = "Delete Selected",
-                    tint = MaterialTheme.colorScheme.error
-                )
-            }
-        }else{
-            IconButton(
-                onClick = onToggleDeleteMode,
-                modifier = Modifier.clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.primary)
-                    .size(40.dp)) {
-                Icon(
-                    imageVector = Icons.Default.Edit,
-                    contentDescription = "Delete Selected",
-                    tint = MaterialTheme.colorScheme.onPrimary
-                )
+        if (selectedTabIndex == 0){
+            if (!isDeleteMode) {
+                IconButton(
+                    onClick = onToggleDeleteMode,
+                    modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.errorContainer)
+                        .size(40.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete Selected",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }else{
+                IconButton(
+                    onClick = onToggleDeleteMode,
+                    modifier = Modifier.clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.primary)
+                        .size(40.dp)) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Delete Selected",
+                        tint = MaterialTheme.colorScheme.onPrimary
+                    )
+                }
             }
         }
+
     }
 }
 @Composable
@@ -295,23 +301,45 @@ private fun UpcomingSessionCard(
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.AccessTime,
-                        contentDescription = "Time",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = session.time,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                    )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ){
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.AccessTime,
+                            contentDescription = "Time",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = session.time,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.DateRange, // Calendar Icon
+                            contentDescription = "Date",
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = session.date,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 // Tags Row
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
                     session.tags.forEachIndexed { index, tag ->
                         val hex = session.tagColors.getOrNull(index)
                         val tagColor = parseHexColorOrNull(hex) ?: MaterialTheme.colorScheme.primary
@@ -466,9 +494,10 @@ private val previewUpcoming = listOf(
         id = 1,
         title = "Morning Meditation",
         time = "07:00 - 09:00",
-        tags = listOf("#meditation", "#mindful"),
-        tagColors = listOf("#5DD39E", "#38C8C2"),
-        recurrence = "Daily"
+        tags = listOf("#meditation", "#mindful", "#meditation", "#mindful", "#meditation", "#mindful"),
+        tagColors = listOf("#5DD39E", "#38C8C2", "#5DD39E", "#38C8C2", "#5DD39E", "#38C8C2"),
+        recurrence = "Daily",
+        date = "Oct 12, 2023",
     ),
     UpcomingSessionUi(
         id = 2,
@@ -476,7 +505,8 @@ private val previewUpcoming = listOf(
         time = "09:00 - 10:00",
         tags = listOf("#work"),
         tagColors = listOf("#FE9F4C"),
-        recurrence = "Weekly"
+        recurrence = "Weekly",
+        date = "Oct 12, 2023",
     )
 )
 private val previewHistory = listOf(

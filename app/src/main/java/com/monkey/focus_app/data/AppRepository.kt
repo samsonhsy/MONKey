@@ -10,6 +10,7 @@ import com.monkey.focus_app.data.db.entity.RewardItem
 import com.monkey.focus_app.data.db.entity.Session
 import com.monkey.focus_app.data.db.entity.Tag
 import com.monkey.focus_app.data.db.entity.UserStats
+import kotlinx.coroutines.flow.first
 
 class AppRepository(
     private val focusLogDao: FocusLogDao,
@@ -19,6 +20,8 @@ class AppRepository(
     private val userStatsDao: UserStatsDao,
     ) {
 /*--------------------------------------------------------------Focus Log------------------------------------------------------- */
+    fun observeAllFocusLog() = focusLogDao.observeAll()
+
     suspend fun getAllFocusLog() = focusLogDao.getAll()
 
     suspend fun getAllFocusLogByIds(focusLogID: IntArray) = focusLogDao.loadAllByIds(focusLogID)
@@ -47,7 +50,9 @@ suspend fun getAllReward() = rewardDao.getAll()
 
     suspend fun getAllSessionById(id: Int) = sessionDao.getSessionsById(id)
 
-    fun getAllActiveSession() = sessionDao.getActiveSession()
+    fun getAllActiveSession(nowMillis: Long) = sessionDao.getActiveSession(nowMillis)
+    suspend fun getActiveSessionNow() = sessionDao.getActiveSessionNow(System.currentTimeMillis())
+    suspend fun getUpcomingOrOngoingSessions(nowMillis: Long) = sessionDao.getUpcomingOrOngoingSessions(nowMillis)
 
     suspend fun insertAllSession(vararg session: Session) = sessionDao.insertAll(*session)
 
@@ -66,14 +71,12 @@ suspend fun getAllReward() = rewardDao.getAll()
     suspend fun updateAllTag(vararg tag: Tag) = tagDao.updateAll(*tag)
 
     suspend fun deleteTag(vararg tag: Tag) = tagDao.delete(*tag)
-
-/*--------------------------------------------------------------User Stats--------------------------------------------------- */
+    suspend fun getAllTagSnapshot(): List<Tag> = tagDao.getAll().first()
+    /*--------------------------------------------------------------User Stats--------------------------------------------------- */
 
     fun getAllUserStats() = userStatsDao.getAll()
 
     suspend fun insertAllUserStats(userStats: UserStats) = userStatsDao.insert(userStats)
 
     suspend fun updateAllUserStats(userStats: UserStats) = userStatsDao.update(userStats)
-
-
 }

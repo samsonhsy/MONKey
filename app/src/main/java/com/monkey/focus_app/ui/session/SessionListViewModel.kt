@@ -1,10 +1,12 @@
 package com.monkey.focus_app.ui.session
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.monkey.focus_app.data.AppRepository
 import com.monkey.focus_app.data.db.entity.Session
 import com.monkey.focus_app.data.db.entity.Tag
+import com.monkey.focus_app.service.scheduler.AlarmScheduler
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlin.Boolean
 
 enum class SessionTab { UPCOMING, HISTORY }
@@ -26,7 +29,8 @@ data class UpcomingSessionUi(
     val time: String,
     val tags: List<String>,
     val tagColors: List<String>,
-    val recurrence: String
+    val recurrence: String,
+    val date: String
 )
 data class HistorySessionUi(
     val id: Int,
@@ -52,8 +56,10 @@ sealed interface SessionListEffect {
 }
 
 class SessionListViewModel (
-    private val repository: AppRepository
+    private val repository: AppRepository,
+    appContext: Context
 ) : ViewModel(){
+    private val alarmScheduler = AlarmScheduler(appContext)
     private val _uiState = MutableStateFlow(SessionListUiState())
     val uiState: StateFlow<SessionListUiState> = _uiState.asStateFlow()
 
@@ -129,6 +135,7 @@ class SessionListViewModel (
             val id = _uiState.value.pendingDeleteSessionId ?: return@launch
             val entity = repository.getAllSessionById(id)
             if (entity != null) {
+                alarmScheduler.cancelSession(entity.sessionID)
                 repository.deleteSession(entity)
                 _effect.emit(SessionListEffect.ShowMessage("Session deleted"))
             }
@@ -151,6 +158,8 @@ class SessionListViewModel (
         val zone = ZoneId.systemDefault()
         val start = Instant.ofEpochMilli(startDateTime).atZone(zone).toLocalTime().format(formatter)
         val end = Instant.ofEpochMilli(endDateTime).atZone(zone).toLocalTime().format(formatter)
+        val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)
+        val dateText = Instant.ofEpochMilli(startDateTime).atZone(zone).toLocalDate().format(dateFormatter)
 
         val tagLabels = tagIds
             .mapNotNull { id -> tagMap[id]?.tagName?.let { "#$it" } }
@@ -160,13 +169,14 @@ class SessionListViewModel (
             id = sessionID,
             title = sessionName,
             time = "$start - $end",
+            date = dateText,
             tags = tagLabels,
             tagColors = tagIds.mapNotNull { id -> tagMap[id]?.colorHex },
             recurrence = recurrence
         )
     }
     private fun Session.toHistoryUi(): HistorySessionUi {
-        val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy")
+        val dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH)
         val zone = ZoneId.systemDefault()
         val dateText = Instant.ofEpochMilli(startDateTime).atZone(zone).toLocalDate().format(dateFormatter)
         return HistorySessionUi(

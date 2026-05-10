@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.content.pm.PackageManager
 import com.monkey.focus_app.data.AppRepository
 import com.monkey.focus_app.data.db.DatabaseBuilder
 import com.monkey.focus_app.service.focus.FocusActions
@@ -19,10 +20,11 @@ import kotlinx.coroutines.launch
 
 data class WarningUiState(
     val sessionId: Int = -1,
-    val blockedPackage: String = "",
+    val blockedAppName: String = "",
     val unlockLevel: String = "NOVICE",
     val currentStep: Int = 0,
     val typedText: String = "",
+    val characterValidation: List<Boolean> = emptyList(),
     val shakeCount: Int = 0,
     val shakeProgress: Float = 0f
 )
@@ -37,7 +39,7 @@ class WarningViewModel(
     private val appContext: Context,
     sessionId: Int,
     blockedPackage: String,
-    unlockLevel: String
+    val unlockLevel: String
 ) : ViewModel() {
 
     private val repository: AppRepository by lazy {
@@ -54,7 +56,7 @@ class WarningViewModel(
     private val _state = MutableStateFlow(
         WarningUiState(
             sessionId = sessionId,
-            blockedPackage = blockedPackage,
+            blockedAppName = resolveBlockedAppName(blockedPackage),
             unlockLevel = unlockLevel
         )
     )
@@ -63,19 +65,46 @@ class WarningViewModel(
     private val _effect = MutableSharedFlow<WarningEffect>()
     val effect: SharedFlow<WarningEffect> = _effect.asSharedFlow()
 
-    val unlockPhrase = "I have decided not to focus and be addicted to my cell phone again."
+    val unlockPhrase = getUnlockPhrase("I have decided to be addicted to my phone again")
 
     companion object {
-        const val SHAKE_TARGET = 100
+//        const val SHAKE_TARGET = 100
+        const val SHAKE_TARGET = 25
+    }
+
+    // Source - https://stackoverflow.com/a/54400933
+    // Posted by WhiteAngel, modified by community. See post 'Timeline' for change history
+    // Retrieved 2026-04-05, License - CC BY-SA 4.0
+
+    fun getRandomString(length: Int): String {
+        val allowedChars = ('a'..'z') + ('0'..'9')
+        return (1..length)
+            .map { allowedChars.random() }
+            .joinToString("")
+    }
+
+    fun getUnlockPhrase(phrase: String): String{
+        return phrase.uppercase().replace(" ", " " + getRandomString(3) + " ")
     }
 
     fun onNewBlockedApp(sessionId: Int, blockedPackage: String, unlockLevel: String) {
         _state.update {
             it.copy(
                 sessionId = sessionId,
-                blockedPackage = blockedPackage,
+                blockedAppName = resolveBlockedAppName(blockedPackage),
                 unlockLevel = unlockLevel
             )
+        }
+    }
+
+    private fun resolveBlockedAppName(packageName: String): String {
+        if (packageName.isBlank()) return ""
+        return try {
+            val pm = appContext.packageManager
+            val appInfo = pm.getApplicationInfo(packageName, 0)
+            pm.getApplicationLabel(appInfo).toString()
+        } catch (_: PackageManager.NameNotFoundException) {
+            packageName
         }
     }
 
@@ -86,14 +115,28 @@ class WarningViewModel(
     }
 
     fun onUnlockClicked() {
-        _state.update { it.copy(currentStep = 0, typedText = "", shakeCount = 0, shakeProgress = 0f) }
+        _state.update {
+            it.copy(
+                currentStep = 0,
+                typedText = "",
+                shakeCount = 0,
+                shakeProgress = 0f
+            )
+        }
         viewModelScope.launch {
             _effect.emit(WarningEffect.NavigateToUnlock)
         }
     }
 
     fun onTypedTextChanged(text: String) {
-        _state.update { it.copy(typedText = text) }
+        val validation = text.mapIndexed { index, char ->
+            if (index < unlockPhrase.length) {
+                char == unlockPhrase[index]
+            } else {
+                false
+            }
+        }
+        _state.update { it.copy(typedText = text, characterValidation = validation) }
     }
 
     fun onSubmitUnlock() {
@@ -118,7 +161,14 @@ class WarningViewModel(
     }
 
     fun onCancelUnlock() {
-        _state.update { it.copy(currentStep = 0, typedText = "", shakeCount = 0, shakeProgress = 0f) }
+        _state.update {
+            it.copy(
+                currentStep = 0,
+                typedText = "",
+                shakeCount = 0,
+                shakeProgress = 0f
+            )
+        }
     }
 
     private fun onUnlockSuccess() {
@@ -137,7 +187,8 @@ class WarningViewModel(
                 }
             }
 
-            _effect.emit(WarningEffect.CloseWarning)
+            _effect.emit(WarningEffect.NavigateToDeviceHome)
         }
+
     }
 }

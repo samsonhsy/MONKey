@@ -1,10 +1,10 @@
 package com.monkey.focus_app.ui.warning
 
 import android.annotation.SuppressLint
-import android.content.Context
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -35,12 +36,22 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.traceEventEnd
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,8 +59,11 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.monkey.focus_app.ui.theme.BrandOrange
+import com.monkey.focus_app.ui.theme.Gray
 import com.monkey.focus_app.ui.theme.MONKeyTheme
-import com.monkey.focus_app.ui.theme.TextGreyLight
+import com.monkey.focus_app.ui.theme.SecondaryGreen
+import com.monkey.focus_app.ui.theme.WrongOrange
+import kotlin.math.sin
 
 //@Composable
 //fun Warning(modifier: Modifier = Modifier,
@@ -123,7 +137,7 @@ import com.monkey.focus_app.ui.theme.TextGreyLight
 
 @Composable
 fun WarningEntryScreen(
-    blockedPackage: String,
+    blockedAppName: String,
     unlockLevel: String,
     onBackToFocus: () -> Unit,
     onUnlock: () -> Unit
@@ -144,8 +158,18 @@ fun WarningEntryScreen(
                     .fillMaxWidth()
                     .height(250.dp)
             )
+            if (blockedAppName.isNotEmpty()){
+                Text(
+                    text = ("Blocked:\n ${blockedAppName.uppercase()}"),
+                    modifier = Modifier.padding(50.dp, 0.dp),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = ("BLOCKED: $blockedPackage\nMode: $unlockLevel").uppercase(),
+                text = ("Mode:\n ${unlockLevel.uppercase()}"),
                 modifier = Modifier.padding(50.dp, 0.dp),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.headlineSmall
@@ -185,14 +209,17 @@ fun WarningEntryScreen(
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun Unlock(modifier: Modifier,
-           navController: NavHostController,
-           state: WarningUiState,
-           onTextChanged: (String) -> Unit,
-           onSubmit: () -> Unit,
-           onShakeStep: () -> Unit,
-           unlockPhrase: String,
-           onCancel: () -> Unit) {
+fun Unlock(
+    modifier: Modifier,
+    navController: NavHostController,
+    state: WarningUiState,
+    onTextChanged: (String) -> Unit,
+    onSubmit: () -> Unit,
+    onShakeStep: () -> Unit,
+    unlockPhrase: String,
+    unlockLevel: String,
+    onCancel: () -> Unit
+) {
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
@@ -200,14 +227,15 @@ fun Unlock(modifier: Modifier,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-
-                StepProgressBar(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(0.dp, 50.dp),
-                    numberOfSteps = 1,
-                    currentStep = state.currentStep
-                )
+                if (unlockLevel.uppercase() == "BHIKKHU") {
+                    StepProgressBar(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(0.dp, 50.dp),
+                        numberOfSteps = 1,
+                        currentStep = state.currentStep
+                    )
+                }
             }
         }
     ) {
@@ -215,6 +243,7 @@ fun Unlock(modifier: Modifier,
             Novice(
                 modifier = modifier,
                 typedText = state.typedText,
+                characterValidation = state.characterValidation,
                 onTextChanged = onTextChanged,
                 onSubmit = onSubmit,
                 unlockPhrase = unlockPhrase,
@@ -253,15 +282,14 @@ fun Step(
     isCurrent: Boolean,
     currentStep: Int
 ) {
-    val color = if (isComplete || isCurrent) BrandOrange else TextGreyLight
-    val innerCircleColor = if (isComplete) BrandOrange else TextGreyLight
+    val color = if (isComplete || isCurrent) BrandOrange else Gray
+    val innerCircleColor = if (isComplete) BrandOrange else Gray
 
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center
     ) {
         if (currentStep == 0) {
-
             HorizontalDivider(
                 modifier = Modifier
                     .align(
@@ -346,10 +374,45 @@ fun StepProgressBar(
 fun Novice(
     modifier: Modifier,
     typedText: String,
+    characterValidation: List<Boolean>,
     onTextChanged: (String) -> Unit,
     onSubmit: () -> Unit,
     unlockPhrase: String
 ) {
+    val scrollState = rememberScrollState()
+    val textMeasurer = rememberTextMeasurer()
+    val context = LocalContext.current
+    
+    val textStyle = TextStyle(
+        fontSize = MaterialTheme.typography.headlineSmall.fontSize,
+        fontWeight = FontWeight.Medium
+    )
+
+    fun calculateScrollPosition(): Int {
+        if (typedText.isEmpty() || typedText.length < 4) return 0
+        
+        val correctLength = typedText.indices.takeWhile { index ->
+            characterValidation.getOrNull(index) ?: false
+        }.size
+        
+        if (correctLength == 0) return 0
+        
+        val offsetLength = (correctLength - 10).coerceAtLeast(0)
+        val correctText = typedText.substring(0, offsetLength)
+        
+        val textLayoutResult = textMeasurer.measure(
+            text = AnnotatedString(correctText),
+            style = textStyle
+        )
+        
+        return textLayoutResult.size.width
+    }
+
+    LaunchedEffect(typedText.length, characterValidation) {
+        val scrollPosition = calculateScrollPosition().coerceIn(0, scrollState.maxValue)
+        scrollState.animateScrollTo(scrollPosition)
+    }
+
     Surface(
         color = MaterialTheme.colorScheme.background,
     ) {
@@ -363,15 +426,51 @@ fun Novice(
                 modifier = Modifier.weight(0.3f)
             )
             Text(
-                text = buildAnnotatedString {
-                    append("Type ")
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(unlockPhrase)
-                    }
-                    append(" to unlock.")
-                },
+                text = "Follow and type below.",
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.titleLarge
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .background(
+                        color = ProgressIndicatorDefaults.linearTrackColor,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .padding(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .horizontalScroll(scrollState)
+                ) {
+                    Text(
+                        text = buildAnnotatedString {
+                            unlockPhrase.forEachIndexed { index, char ->
+                                val isCorrect = characterValidation.getOrNull(index) ?: false
+                                val color = when {
+                                    index >= typedText.length -> Gray
+                                    isCorrect -> SecondaryGreen
+                                    else -> WrongOrange
+                                }
+                                withStyle(SpanStyle(color = color)) {
+                                    append(char)
+                                }
+                            }
+                        },
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.weight(0.05f)
             )
             TextField(
                 modifier = Modifier
@@ -380,15 +479,24 @@ fun Novice(
                 value = typedText,
                 onValueChange = onTextChanged,
                 label = { Text("Enter here") },
+                singleLine = true,
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = ProgressIndicatorDefaults.linearTrackColor,
-                    unfocusedContainerColor = ProgressIndicatorDefaults.linearTrackColor
+                    unfocusedContainerColor = ProgressIndicatorDefaults.linearTrackColor,
+                    unfocusedLabelColor = Gray,
+                    unfocusedIndicatorColor = Gray
                 )
             )
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
-                onClick = onSubmit
+                onClick = {
+                    if (typedText == unlockPhrase) {
+                        onSubmit()
+                    } else {
+                        Toast.makeText(context, "The phrase to unlock is incorrect/incomplete, try again.", Toast.LENGTH_SHORT).show()
+                    }
+                }
             ) {
                 Text(
                     text = "Enter",
@@ -436,7 +544,8 @@ fun Bhikkhu(
                 modifier = Modifier.weight(0.3f)
             )
             Text(
-                text = "Shake your cell phone for 100 times to unlock",
+//                text = "Shake your cell phone for 100 times to unlock",
+                text = "Shake your cell phone for 25 times to unlock",
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.titleLarge
             )
@@ -454,7 +563,8 @@ fun Bhikkhu(
                 modifier = Modifier.size(30.dp)
             )
             Text(
-                text = if (shakeCount < 100) "${shakeCount}/100" else "Done!",
+//                text = if (shakeCount < 100) "${shakeCount}/100" else "Done!",
+                text = if (shakeCount < 25) "${shakeCount}/25" else "Done!",
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.titleMedium,
                 color = BrandOrange
@@ -491,7 +601,7 @@ fun Bhikkhu(
 fun WarningEntryScreenPreviewLight() {
     MONKeyTheme {
         WarningEntryScreen(
-            blockedPackage = "",
+            blockedAppName = "Instagram",
             unlockLevel = "NOVICE",
             onBackToFocus = {},
             onUnlock = {},
@@ -504,7 +614,7 @@ fun WarningEntryScreenPreviewLight() {
 fun WarningEntryScreenPreviewDark() {
     MONKeyTheme(darkTheme = true) {
         WarningEntryScreen(
-            blockedPackage = "",
+            blockedAppName = "",
             unlockLevel = "NOVICE",
             onBackToFocus = {},
             onUnlock = {},
@@ -519,6 +629,7 @@ fun NovicePreviewLight() {
         Novice(
             modifier = Modifier,
             typedText = "",
+            characterValidation = emptyList(),
             onTextChanged = {},
             onSubmit = {},
             unlockPhrase = "I have decided not to focus and be addicted to my cell phone again."
@@ -533,6 +644,7 @@ fun NovicePreviewDark() {
         Novice(
             modifier = Modifier,
             typedText = "",
+            characterValidation = emptyList(),
             onTextChanged = {},
             onSubmit = {},
             unlockPhrase = "I have decided not to focus and be addicted to my cell phone again."
@@ -578,6 +690,7 @@ fun UnlockPreviewLight() {
             onSubmit = {},
             onShakeStep = {},
             unlockPhrase = "I have decided not to focus and be addicted to my cell phone again.",
+            unlockLevel = "Novice",
             onCancel = {}
         )
     }
@@ -595,6 +708,7 @@ fun UnlockPreviewDark() {
             onSubmit = {},
             onShakeStep = {},
             unlockPhrase = "I have decided not to focus and be addicted to my cell phone again.",
+            unlockLevel = "BHIKKHU",
             onCancel = {}
         )
     }
