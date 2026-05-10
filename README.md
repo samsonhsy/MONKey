@@ -37,7 +37,7 @@ It is recommended to set MONKey battery usage to unrestricted and allow Auto-sta
 
 ### License
 
-Copyright (c) 2026 samsonhy
+Copyright (c) 2026 samsonhsy
 
 Licensed under the MIT license.
 
